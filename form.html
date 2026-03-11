@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>OG Image Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Figtree, sans-serif; background: #f0f0f0; padding: 40px; }
+    h1 { margin-bottom: 8px; }
+    h2.section { font-size: 16px; color: #666; margin-bottom: 24px; }
+    .tabs { display: flex; gap: 0; margin-bottom: 24px; }
+    .tab { padding: 8px 20px; font-size: 14px; font-weight: 700; border: 1px solid #ccc; background: #fff; cursor: pointer; font-family: inherit; }
+    .tab:first-child { border-radius: 6px 0 0 6px; }
+    .tab:last-child { border-radius: 0 6px 6px 0; }
+    .tab.active { background: #1a1a2e; color: #fff; border-color: #1a1a2e; }
+    .mode { display: none; }
+    .mode.active { display: block; }
+    .form { margin-bottom: 40px; display: flex; gap: 16px; flex-wrap: wrap; align-items: end; }
+    .field { display: flex; flex-direction: column; gap: 4px; }
+    .field label { font-size: 14px; font-weight: 700; }
+    .field input { padding: 8px 12px; font-size: 16px; border: 1px solid #ccc; border-radius: 6px; width: 400px; font-family: inherit; }
+    .btn { padding: 8px 20px; font-size: 16px; font-weight: 700; border: none; border-radius: 6px; background: #1a1a2e; color: #fff; cursor: pointer; font-family: inherit; }
+    .btn:hover { background: #2a2a4e; }
+    .previews { display: flex; flex-direction: column; gap: 32px; }
+    .preview { display: flex; flex-direction: column; gap: 8px; }
+    .preview h2 { font-size: 18px; color: #666; }
+    .preview img { border: 1px solid #ddd; background: #fff; }
+    .status { font-size: 14px; color: #888; margin-bottom: 16px; min-height: 20px; }
+  </style>
+</head>
+<body>
+  <h1>OG Image Generator</h1>
+  <h2 class="section">Preview OG images with manual input or by fetching from a URL</h2>
+
+  <div class="tabs">
+    <button class="tab active" data-mode="manual">Manual</button>
+    <button class="tab" data-mode="url">From URL</button>
+  </div>
+
+  <div id="mode-manual" class="mode active">
+    <div class="form">
+      <div class="field">
+        <label for="title">Title</label>
+        <input type="text" id="title" value="Hello, Open Home Foundation!" />
+      </div>
+      <div class="field">
+        <label for="subtitle">Subtitle</label>
+        <input type="text" id="subtitle" value="This is a test OG image" />
+      </div>
+    </div>
+  </div>
+
+  <div id="mode-url" class="mode">
+    <div class="form">
+      <div class="field">
+        <label for="url">Website URL</label>
+        <input type="url" id="url" placeholder="https://example.com" />
+      </div>
+      <button class="btn" id="fetch-btn">Fetch</button>
+    </div>
+    <div class="status" id="status"></div>
+  </div>
+
+  <div class="previews">
+    <div class="preview">
+      <h2>OG Image (1200 x 630)</h2>
+      <img id="img-og" width="600" />
+    </div>
+    <div class="preview">
+      <h2>Portrait (1080 x 1350)</h2>
+      <img id="img-portrait" width="400" />
+    </div>
+    <div class="preview">
+      <h2>Square (1080 x 1080)</h2>
+      <img id="img-square" width="400" />
+    </div>
+  </div>
+
+  <script>
+    const titleInput = document.getElementById("title");
+    const subtitleInput = document.getElementById("subtitle");
+    const urlInput = document.getElementById("url");
+    const fetchBtn = document.getElementById("fetch-btn");
+    const status = document.getElementById("status");
+    const tabs = document.querySelectorAll(".tab");
+    let debounceTimer;
+    let currentMode = "manual";
+
+    // Tab switching
+    tabs.forEach(tab => {
+      tab.addEventListener("click", () => {
+        tabs.forEach(t => t.classList.remove("active"));
+        tab.classList.add("active");
+        currentMode = tab.dataset.mode;
+        document.querySelectorAll(".mode").forEach(m => m.classList.remove("active"));
+        document.getElementById(`mode-${currentMode}`).classList.add("active");
+      });
+    });
+
+    function updateImagesManual() {
+      const params = new URLSearchParams({
+        title: titleInput.value,
+        subtitle: subtitleInput.value,
+      });
+      const sizes = ["og", "portrait", "square"];
+      for (const size of sizes) {
+        const img = document.getElementById(`img-${size}`);
+        img.src = `/generate?${params}&size=${size}&t=${Date.now()}`;
+      }
+    }
+
+    function updateImagesFromUrl(targetUrl) {
+      const sizes = ["og", "portrait", "square"];
+      for (const size of sizes) {
+        const img = document.getElementById(`img-${size}`);
+        img.src = `/og?url=${encodeURIComponent(targetUrl)}&size=${size}&t=${Date.now()}`;
+      }
+    }
+
+    titleInput.addEventListener("input", () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(updateImagesManual, 300);
+    });
+    subtitleInput.addEventListener("input", () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(updateImagesManual, 300);
+    });
+
+    fetchBtn.addEventListener("click", () => {
+      const url = urlInput.value.trim();
+      if (!url) return;
+      status.textContent = "Fetching...";
+      updateImagesFromUrl(url);
+      // Clear status when first image loads
+      document.getElementById("img-og").onload = () => {
+        status.textContent = "";
+      };
+      document.getElementById("img-og").onerror = () => {
+        status.textContent = "Failed to generate image from URL";
+      };
+    });
+
+    urlInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") fetchBtn.click();
+    });
+
+    updateImagesManual();
+  </script>
+</body>
+</html>
