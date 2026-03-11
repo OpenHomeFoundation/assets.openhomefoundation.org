@@ -1,13 +1,11 @@
 import { ImageResponse } from "@vercel/og";
 import { readFileSync } from "fs";
-import { fileURLToPath } from "url";
-import { dirname, join } from "path";
+import { join } from "path";
 import { parse } from "node-html-parser";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-
-const fontData = readFileSync(join(__dirname, "../../fonts/Figtree-Regular.ttf"));
-const fontBoldData = readFileSync(join(__dirname, "../../fonts/Figtree-Bold.ttf"));
+const fontsDir = join(process.cwd(), "fonts");
+const fontData = readFileSync(join(fontsDir, "Figtree-Regular.ttf"));
+const fontBoldData = readFileSync(join(fontsDir, "Figtree-Bold.ttf"));
 
 const fonts = [
   { name: "Figtree", data: fontData, weight: 400, style: "normal" },
