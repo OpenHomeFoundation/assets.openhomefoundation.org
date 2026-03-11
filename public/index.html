@@ -29,7 +29,7 @@
     .preview h2 { font-size: 18px; color: #666; }
     .preview h2 span { font-weight: 400; font-size: 14px; color: #999; }
     .preview img { border: 1px solid #ddd; background: #fff; }
-    .options { margin-bottom: 24px; font-size: 14px; }
+    .options { margin-bottom: 24px; font-size: 14px; display: flex; gap: 16px; }
     .options label { cursor: pointer; }
     .status { font-size: 14px; color: #888; margin-bottom: 16px; min-height: 20px; }
   </style>
@@ -77,6 +77,7 @@
 
   <div class="options">
     <label><input type="checkbox" id="bypass-cache" checked /> Bypass cache</label>
+    <label><input type="checkbox" id="ignore-og" /> Ignore existing OG image</label>
   </div>
 
   <div class="previews">
@@ -101,6 +102,7 @@
     const fetchBtn = document.getElementById("fetch-btn");
     const status = document.getElementById("status");
     const bypassCache = document.getElementById("bypass-cache");
+    const ignoreOg = document.getElementById("ignore-og");
     const templateSelect = document.getElementById("template");
     const layoutSelect = document.getElementById("layout");
     const tabs = document.querySelectorAll(".tab");
@@ -178,8 +180,9 @@
     }
 
     async function updateImagesFromUrl(targetUrl) {
+      const extra = ignoreOg.checked ? "&ignoreOg=1" : "";
       for (const size of ["og", "portrait", "square"]) {
-        await loadImage(size, `/og?url=${encodeURIComponent(targetUrl)}&size=${size}`);
+        await loadImage(size, `/og?url=${encodeURIComponent(targetUrl)}&size=${size}${extra}`);
       }
     }
 

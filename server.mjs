@@ -33,6 +33,7 @@ async function fetchMeta(targetUrl) {
   };
 
   return {
+    ogImage: getMeta("property", "og:image") || "",
     title:
       getMeta("name", "og-image:title") ||
       getMeta("property", "og:title") ||
@@ -89,8 +90,22 @@ const server = createServer(async (req, res) => {
       res.end("Missing ?url= parameter");
       return;
     }
+    const ignoreOg = url.searchParams.get("ignoreOg") === "1";
     try {
       const meta = await fetchMeta(targetUrl);
+
+      // If source has an og:image and we're not ignoring it, proxy it
+      if (meta.ogImage && !ignoreOg) {
+        const imgRes = await fetch(meta.ogImage);
+        const buffer = Buffer.from(await imgRes.arrayBuffer());
+        res.writeHead(200, {
+          "Content-Type": imgRes.headers.get("content-type") || "image/png",
+          "Cache-Control": "public, max-age=3600",
+        });
+        res.end(buffer);
+        return;
+      }
+
       const size = SIZES[url.searchParams.get("size")] || SIZES.og;
       const response = await generateImage({
         ...meta,
