@@ -3,4 +3,4 @@
 
 [functions]
   node_bundler = "esbuild"
-  included_files = ["fonts/**"]
+  included_files = ["fonts/**", "templates/**"]

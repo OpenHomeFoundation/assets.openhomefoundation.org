@@ -1,0 +1,11 @@
+{
+  "domain": "*",
+  "colors": {
+    "background": "#1a1a2e",
+    "text": "#ffffff",
+    "subtitle": "#a0a0c0"
+  },
+  "routes": [
+    { "path": "*", "layout": "default" }
+  ]
+}

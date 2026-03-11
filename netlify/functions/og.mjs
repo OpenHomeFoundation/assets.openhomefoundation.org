@@ -2,6 +2,7 @@ import { ImageResponse } from "@vercel/og";
 import { readFileSync } from "fs";
 import { join } from "path";
 import { parse } from "node-html-parser";
+import { resolveTemplate, resolveTemplateById, loadLayout, loadAssets, listTemplates } from "../../lib/templates.mjs";
 
 const fontsDir = join(process.cwd(), "fonts");
 const fontData = readFileSync(join(fontsDir, "Figtree-Regular.ttf"));
@@ -42,58 +43,16 @@ async function fetchMeta(targetUrl) {
   };
 }
 
-function renderImage({ title, subtitle, width, height }) {
-  return new ImageResponse(
-    {
-      type: "div",
-      props: {
-        style: {
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          padding: "60px",
-          width: "100%",
-          height: "100%",
-          backgroundColor: "#1a1a2e",
-          color: "#ffffff",
-          fontFamily: "Figtree",
-        },
-        children: [
-          {
-            type: "div",
-            props: {
-              style: {
-                fontSize: width > 1100 ? "64px" : "48px",
-                fontWeight: 700,
-                lineHeight: 1.2,
-              },
-              children: title || "Untitled",
-            },
-          },
-          subtitle
-            ? {
-                type: "div",
-                props: {
-                  style: {
-                    fontSize: width > 1100 ? "32px" : "24px",
-                    color: "#a0a0c0",
-                    marginTop: "20px",
-                  },
-                  children: subtitle,
-                },
-              }
-            : null,
-        ].filter(Boolean),
-      },
-    },
-    { width, height, fonts }
-  );
-}
-
 export default async (req) => {
   const url = new URL(req.url);
-  const params = url.searchParams;
 
+  if (url.pathname === "/templates") {
+    return new Response(JSON.stringify(listTemplates()), {
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  const params = url.searchParams;
   const targetUrl = params.get("url");
   const size = params.get("size") || "og";
   const { width, height } = SIZES[size] || SIZES.og;
@@ -113,7 +72,26 @@ export default async (req) => {
     subtitle = params.get("subtitle") || "";
   }
 
-  const response = renderImage({ title, subtitle, width, height });
+  // Resolve template based on URL, template ID, or manual params
+  const templateId = params.get("templateId") || "";
+  const layoutOverride = params.get("layout") || "";
+  const templateUrl = targetUrl || params.get("template") || "";
+  const { templateDir, layoutName, config } = templateId
+    ? resolveTemplateById(templateId, layoutOverride)
+    : resolveTemplate(templateUrl);
+  const layout = await loadLayout(templateDir, layoutName);
+  const assets = loadAssets(templateDir);
+
+  const element = layout({
+    title,
+    subtitle,
+    colors: config.colors,
+    width,
+    height,
+    assets,
+  });
+
+  const response = new ImageResponse(element, { width, height, fonts });
   const buffer = Buffer.from(await response.arrayBuffer());
 
   const cacheControl = targetUrl
@@ -132,5 +110,5 @@ export default async (req) => {
 };
 
 export const config = {
-  path: ["/og", "/generate"],
+  path: ["/og", "/generate", "/templates"],
 };

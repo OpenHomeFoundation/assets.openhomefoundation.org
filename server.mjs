@@ -4,6 +4,7 @@ import { readFileSync } from "fs";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 import { parse } from "node-html-parser";
+import { resolveTemplate, resolveTemplateById, loadLayout, loadAssets, listTemplates } from "./lib/templates.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -27,8 +28,7 @@ async function fetchMeta(targetUrl) {
   const root = parse(html);
 
   const getMeta = (attr, value) => {
-    const el =
-      root.querySelector(`meta[${attr}="${value}"]`);
+    const el = root.querySelector(`meta[${attr}="${value}"]`);
     return el?.getAttribute("content") || "";
   };
 
@@ -46,52 +46,23 @@ async function fetchMeta(targetUrl) {
   };
 }
 
-function renderImage({ title, subtitle, width, height }) {
-  return new ImageResponse(
-    {
-      type: "div",
-      props: {
-        style: {
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          padding: "60px",
-          width: "100%",
-          height: "100%",
-          backgroundColor: "#1a1a2e",
-          color: "#ffffff",
-          fontFamily: "Figtree",
-        },
-        children: [
-          {
-            type: "div",
-            props: {
-              style: {
-                fontSize: width > 1100 ? "64px" : "48px",
-                fontWeight: 700,
-                lineHeight: 1.2,
-              },
-              children: title || "Untitled",
-            },
-          },
-          subtitle
-            ? {
-                type: "div",
-                props: {
-                  style: {
-                    fontSize: width > 1100 ? "32px" : "24px",
-                    color: "#a0a0c0",
-                    marginTop: "20px",
-                  },
-                  children: subtitle,
-                },
-              }
-            : null,
-        ].filter(Boolean),
-      },
-    },
-    { width, height, fonts }
-  );
+async function generateImage({ title, subtitle, templateUrl, templateId, layoutOverride, width, height }) {
+  const { templateDir, layoutName, config } = templateId
+    ? resolveTemplateById(templateId, layoutOverride)
+    : resolveTemplate(templateUrl);
+  const layout = await loadLayout(templateDir, layoutName);
+  const assets = loadAssets(templateDir);
+
+  const element = layout({
+    title,
+    subtitle,
+    colors: config.colors,
+    width,
+    height,
+    assets,
+  });
+
+  return new ImageResponse(element, { width, height, fonts });
 }
 
 const formHTML = readFileSync(join(__dirname, "public/index.html"), "utf-8");
@@ -105,7 +76,12 @@ const server = createServer(async (req, res) => {
     return;
   }
 
-  // Main OG endpoint: /og?url=https://example.com
+  if (url.pathname === "/templates") {
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify(listTemplates()));
+    return;
+  }
+
   if (url.pathname === "/og") {
     const targetUrl = url.searchParams.get("url");
     if (!targetUrl) {
@@ -116,7 +92,11 @@ const server = createServer(async (req, res) => {
     try {
       const meta = await fetchMeta(targetUrl);
       const size = SIZES[url.searchParams.get("size")] || SIZES.og;
-      const response = renderImage({ ...meta, ...size });
+      const response = await generateImage({
+        ...meta,
+        templateUrl: targetUrl,
+        ...size,
+      });
       const buffer = Buffer.from(await response.arrayBuffer());
       res.writeHead(200, {
         "Content-Type": "image/png",
@@ -130,14 +110,16 @@ const server = createServer(async (req, res) => {
     return;
   }
 
-  // Form preview endpoint: /generate?title=...&subtitle=...&size=og
   if (url.pathname === "/generate") {
     const title = url.searchParams.get("title") || "Untitled";
     const subtitle = url.searchParams.get("subtitle") || "";
     const size = url.searchParams.get("size") || "og";
+    const templateId = url.searchParams.get("templateId") || "";
+    const layoutOverride = url.searchParams.get("layout") || "";
+    const templateUrl = url.searchParams.get("template") || "";
     const { width, height } = SIZES[size] || SIZES.og;
 
-    const response = renderImage({ title, subtitle, width, height });
+    const response = await generateImage({ title, subtitle, templateUrl, templateId, layoutOverride, width, height });
     const buffer = Buffer.from(await response.arrayBuffer());
     res.writeHead(200, {
       "Content-Type": "image/png",

@@ -1,0 +1,14 @@
+{
+  "domain": "home-assistant.io",
+  "colors": {
+    "background": "#03A9F4",
+    "text": "#ffffff",
+    "subtitle": "rgba(255, 255, 255, 0.8)",
+    "accent": "#0288D1"
+  },
+  "routes": [
+    { "path": "/blog/*", "layout": "blog" },
+    { "path": "/integrations/*", "layout": "integration" },
+    { "path": "*", "layout": "default" }
+  ]
+}

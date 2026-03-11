@@ -21,7 +21,7 @@
     .form { margin-bottom: 40px; display: flex; gap: 16px; flex-wrap: wrap; align-items: end; }
     .field { display: flex; flex-direction: column; gap: 4px; }
     .field label { font-size: 14px; font-weight: 700; }
-    .field input { padding: 8px 12px; font-size: 16px; border: 1px solid #ccc; border-radius: 6px; width: 400px; font-family: inherit; }
+    .field input, .field select { padding: 8px 12px; font-size: 16px; border: 1px solid #ccc; border-radius: 6px; width: 400px; font-family: inherit; }
     .btn { padding: 8px 20px; font-size: 16px; font-weight: 700; border: none; border-radius: 6px; background: #1a1a2e; color: #fff; cursor: pointer; font-family: inherit; }
     .btn:hover { background: #2a2a4e; }
     .previews { display: flex; flex-direction: column; gap: 32px; }
@@ -52,6 +52,14 @@
       <div class="field">
         <label for="subtitle">Subtitle</label>
         <input type="text" id="subtitle" value="This is a test OG image" />
+      </div>
+      <div class="field">
+        <label for="template">Template</label>
+        <select id="template"></select>
+      </div>
+      <div class="field">
+        <label for="layout">Layout</label>
+        <select id="layout"></select>
       </div>
     </div>
   </div>
@@ -93,9 +101,40 @@
     const fetchBtn = document.getElementById("fetch-btn");
     const status = document.getElementById("status");
     const bypassCache = document.getElementById("bypass-cache");
+    const templateSelect = document.getElementById("template");
+    const layoutSelect = document.getElementById("layout");
     const tabs = document.querySelectorAll(".tab");
     let debounceTimer;
     let currentMode = "manual";
+    let templatesData = [];
+
+    // Load templates
+    fetch("/templates")
+      .then((r) => r.json())
+      .then((data) => {
+        templatesData = data;
+        templateSelect.innerHTML = data
+          .map((t) => `<option value="${t.id}">${t.id} (${t.domain})</option>`)
+          .join("");
+        updateLayouts();
+      });
+
+    templateSelect.addEventListener("change", () => {
+      updateLayouts();
+      updateImagesManual();
+    });
+
+    layoutSelect.addEventListener("change", () => {
+      updateImagesManual();
+    });
+
+    function updateLayouts() {
+      const tmpl = templatesData.find((t) => t.id === templateSelect.value);
+      if (!tmpl) return;
+      layoutSelect.innerHTML = tmpl.layouts
+        .map((l) => `<option value="${l}">${l}</option>`)
+        .join("");
+    }
 
     // Tab switching
     tabs.forEach(tab => {
@@ -130,6 +169,8 @@
       const params = new URLSearchParams({
         title: titleInput.value,
         subtitle: subtitleInput.value,
+        templateId: templateSelect.value,
+        layout: layoutSelect.value,
       });
       for (const size of ["og", "portrait", "square"]) {
         await loadImage(size, `/generate?${params}&size=${size}`);
