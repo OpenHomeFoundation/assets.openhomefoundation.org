@@ -2,15 +2,14 @@ import { ImageResponse } from "@vercel/og";
 import { readFileSync } from "fs";
 import { join } from "path";
 import { parse } from "node-html-parser";
-import { resolveTemplate, resolveTemplateById, loadLayout, loadAssets, listTemplates } from "../../lib/templates.mjs";
+import { resolveTemplate, resolveTemplateById, loadLayout, loadAssets, fetchRemoteAssets, listTemplates, cleanTitle } from "../../lib/templates.mjs";
 
 const fontsDir = join(process.cwd(), "fonts");
-const fontData = readFileSync(join(fontsDir, "Figtree-Regular.ttf"));
-const fontBoldData = readFileSync(join(fontsDir, "Figtree-Bold.ttf"));
 
 const fonts = [
-  { name: "Figtree", data: fontData, weight: 400, style: "normal" },
-  { name: "Figtree", data: fontBoldData, weight: 700, style: "normal" },
+  { name: "Figtree", data: readFileSync(join(fontsDir, "Figtree-Regular.ttf")), weight: 400, style: "normal" },
+  { name: "Figtree", data: readFileSync(join(fontsDir, "Figtree-Bold.ttf")), weight: 700, style: "normal" },
+  { name: "Instrument Sans", data: readFileSync(join(fontsDir, "InstrumentSans-Regular.ttf")), weight: 400, style: "normal" },
 ];
 
 const SIZES = {
@@ -41,6 +40,11 @@ async function fetchMeta(targetUrl) {
       getMeta("property", "og:description") ||
       getMeta("name", "description") ||
       "",
+    author:
+      getMeta("name", "og-image:author") ||
+      getMeta("property", "og:author") ||
+      getMeta("name", "author") ||
+      "",
   };
 }
 
@@ -58,7 +62,7 @@ export default async (req) => {
   const size = params.get("size") || "og";
   const { width, height } = SIZES[size] || SIZES.og;
 
-  let title, subtitle;
+  let title, subtitle, author;
 
   const ignoreOg = params.get("ignoreOg") === "1";
 
@@ -68,7 +72,8 @@ export default async (req) => {
 
       // If source has an og:image and we're not ignoring it, proxy it
       if (meta.ogImage && !ignoreOg) {
-        const imgRes = await fetch(meta.ogImage);
+        const ogImageUrl = new URL(meta.ogImage, targetUrl).href;
+        const imgRes = await fetch(ogImageUrl);
         const buffer = Buffer.from(await imgRes.arrayBuffer());
         return new Response(buffer, {
           headers: {
@@ -80,12 +85,14 @@ export default async (req) => {
 
       title = meta.title;
       subtitle = meta.subtitle;
+      author = meta.author;
     } catch (err) {
       return new Response(`Failed to fetch URL: ${err.message}`, { status: 500 });
     }
   } else {
     title = params.get("title") || "Untitled";
     subtitle = params.get("subtitle") || "";
+    author = params.get("author") || "";
   }
 
   // Resolve template based on URL, template ID, or manual params
@@ -96,11 +103,12 @@ export default async (req) => {
     ? resolveTemplateById(templateId, layoutOverride)
     : resolveTemplate(templateUrl);
   const layout = await loadLayout(templateDir, layoutName);
-  const assets = loadAssets(templateDir);
+  const assets = await fetchRemoteAssets(loadAssets(templateDir));
 
   const element = layout({
-    title,
+    title: cleanTitle(title, config),
     subtitle,
+    author,
     colors: config.colors,
     width,
     height,

@@ -1,0 +1,13 @@
+{
+  "domain": "openhomefoundation.org",
+  "stripTitleSuffix": true,
+  "colors": {
+    "text": "#ffffff"
+  },
+  "remoteAssets": {
+    "logo": "https://media.githubusercontent.com/media/OpenHomeFoundation/brand-assets/refs/heads/main/open-home-foundation/lockup/png/ohf-lockup-inline-monochrome-on-dark.png"
+  },
+  "routes": [
+    { "path": "*", "layout": "default" }
+  ]
+}

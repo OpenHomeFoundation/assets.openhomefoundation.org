@@ -4,16 +4,14 @@ import { readFileSync } from "fs";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 import { parse } from "node-html-parser";
-import { resolveTemplate, resolveTemplateById, loadLayout, loadAssets, listTemplates } from "./lib/templates.mjs";
+import { resolveTemplate, resolveTemplateById, loadLayout, loadAssets, fetchRemoteAssets, listTemplates, cleanTitle } from "./lib/templates.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const fontData = readFileSync(join(__dirname, "fonts/Figtree-Regular.ttf"));
-const fontBoldData = readFileSync(join(__dirname, "fonts/Figtree-Bold.ttf"));
-
 const fonts = [
-  { name: "Figtree", data: fontData, weight: 400, style: "normal" },
-  { name: "Figtree", data: fontBoldData, weight: 700, style: "normal" },
+  { name: "Figtree", data: readFileSync(join(__dirname, "fonts/Figtree-Regular.ttf")), weight: 400, style: "normal" },
+  { name: "Figtree", data: readFileSync(join(__dirname, "fonts/Figtree-Bold.ttf")), weight: 700, style: "normal" },
+  { name: "Instrument Sans", data: readFileSync(join(__dirname, "fonts/InstrumentSans-Regular.ttf")), weight: 400, style: "normal" },
 ];
 
 const SIZES = {
@@ -44,19 +42,25 @@ async function fetchMeta(targetUrl) {
       getMeta("property", "og:description") ||
       getMeta("name", "description") ||
       "",
+    author:
+      getMeta("name", "og-image:author") ||
+      getMeta("property", "og:author") ||
+      getMeta("name", "author") ||
+      "",
   };
 }
 
-async function generateImage({ title, subtitle, templateUrl, templateId, layoutOverride, width, height }) {
+async function generateImage({ title, subtitle, author, templateUrl, templateId, layoutOverride, width, height }) {
   const { templateDir, layoutName, config } = templateId
     ? resolveTemplateById(templateId, layoutOverride)
     : resolveTemplate(templateUrl);
   const layout = await loadLayout(templateDir, layoutName);
-  const assets = loadAssets(templateDir);
+  const assets = await fetchRemoteAssets(loadAssets(templateDir));
 
   const element = layout({
-    title,
+    title: cleanTitle(title, config),
     subtitle,
+    author,
     colors: config.colors,
     width,
     height,
@@ -96,7 +100,8 @@ const server = createServer(async (req, res) => {
 
       // If source has an og:image and we're not ignoring it, proxy it
       if (meta.ogImage && !ignoreOg) {
-        const imgRes = await fetch(meta.ogImage);
+        const ogImageUrl = new URL(meta.ogImage, targetUrl).href;
+        const imgRes = await fetch(ogImageUrl);
         const buffer = Buffer.from(await imgRes.arrayBuffer());
         res.writeHead(200, {
           "Content-Type": imgRes.headers.get("content-type") || "image/png",
@@ -128,13 +133,14 @@ const server = createServer(async (req, res) => {
   if (url.pathname === "/generate") {
     const title = url.searchParams.get("title") || "Untitled";
     const subtitle = url.searchParams.get("subtitle") || "";
+    const author = url.searchParams.get("author") || "";
     const size = url.searchParams.get("size") || "og";
     const templateId = url.searchParams.get("templateId") || "";
     const layoutOverride = url.searchParams.get("layout") || "";
     const templateUrl = url.searchParams.get("template") || "";
     const { width, height } = SIZES[size] || SIZES.og;
 
-    const response = await generateImage({ title, subtitle, templateUrl, templateId, layoutOverride, width, height });
+    const response = await generateImage({ title, subtitle, author, templateUrl, templateId, layoutOverride, width, height });
     const buffer = Buffer.from(await response.arrayBuffer());
     res.writeHead(200, {
       "Content-Type": "image/png",

@@ -54,6 +54,10 @@
         <input type="text" id="subtitle" value="This is a test OG image" />
       </div>
       <div class="field">
+        <label for="author">Author</label>
+        <input type="text" id="author" placeholder="Optional" />
+      </div>
+      <div class="field">
         <label for="template">Template</label>
         <select id="template"></select>
       </div>
@@ -98,6 +102,7 @@
   <script>
     const titleInput = document.getElementById("title");
     const subtitleInput = document.getElementById("subtitle");
+    const authorInput = document.getElementById("author");
     const urlInput = document.getElementById("url");
     const fetchBtn = document.getElementById("fetch-btn");
     const status = document.getElementById("status");
@@ -146,6 +151,7 @@
         currentMode = tab.dataset.mode;
         document.querySelectorAll(".mode").forEach(m => m.classList.remove("active"));
         document.getElementById(`mode-${currentMode}`).classList.add("active");
+        if (currentMode === "manual") updateImagesManual();
       });
     });
 
@@ -171,6 +177,7 @@
       const params = new URLSearchParams({
         title: titleInput.value,
         subtitle: subtitleInput.value,
+        author: authorInput.value,
         templateId: templateSelect.value,
         layout: layoutSelect.value,
       });
@@ -191,6 +198,10 @@
       debounceTimer = setTimeout(updateImagesManual, 300);
     });
     subtitleInput.addEventListener("input", () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(updateImagesManual, 300);
+    });
+    authorInput.addEventListener("input", () => {
       clearTimeout(debounceTimer);
       debounceTimer = setTimeout(updateImagesManual, 300);
     });
