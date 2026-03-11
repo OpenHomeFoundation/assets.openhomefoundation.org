@@ -102,32 +102,36 @@
     });
 
     function loadImage(size, src) {
-      const img = document.getElementById(`img-${size}`);
-      const timeEl = document.getElementById(`time-${size}`);
-      const start = performance.now();
-      timeEl.textContent = "loading...";
-      img.onload = () => {
-        timeEl.textContent = `${Math.round(performance.now() - start)}ms`;
-      };
-      img.onerror = () => {
-        timeEl.textContent = "failed";
-      };
-      img.src = src;
+      return new Promise((resolve) => {
+        const img = document.getElementById(`img-${size}`);
+        const timeEl = document.getElementById(`time-${size}`);
+        const start = performance.now();
+        timeEl.textContent = "loading...";
+        img.onload = () => {
+          timeEl.textContent = `${Math.round(performance.now() - start)}ms`;
+          resolve();
+        };
+        img.onerror = () => {
+          timeEl.textContent = "failed";
+          resolve();
+        };
+        img.src = src;
+      });
     }
 
-    function updateImagesManual() {
+    async function updateImagesManual() {
       const params = new URLSearchParams({
         title: titleInput.value,
         subtitle: subtitleInput.value,
       });
       for (const size of ["og", "portrait", "square"]) {
-        loadImage(size, `/generate?${params}&size=${size}&t=${Date.now()}`);
+        await loadImage(size, `/generate?${params}&size=${size}&t=${Date.now()}`);
       }
     }
 
-    function updateImagesFromUrl(targetUrl) {
+    async function updateImagesFromUrl(targetUrl) {
       for (const size of ["og", "portrait", "square"]) {
-        loadImage(size, `/og?url=${encodeURIComponent(targetUrl)}&size=${size}&t=${Date.now()}`);
+        await loadImage(size, `/og?url=${encodeURIComponent(targetUrl)}&size=${size}&t=${Date.now()}`);
       }
     }
 
