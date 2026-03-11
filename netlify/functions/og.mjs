@@ -1,4 +1,3 @@
-import { createServer } from "http";
 import { ImageResponse } from "@vercel/og";
 import { readFileSync } from "fs";
 import { fileURLToPath } from "url";
@@ -7,8 +6,8 @@ import { parse } from "node-html-parser";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const fontData = readFileSync(join(__dirname, "fonts/Figtree-Regular.ttf"));
-const fontBoldData = readFileSync(join(__dirname, "fonts/Figtree-Bold.ttf"));
+const fontData = readFileSync(join(__dirname, "../../fonts/Figtree-Regular.ttf"));
+const fontBoldData = readFileSync(join(__dirname, "../../fonts/Figtree-Bold.ttf"));
 
 const fonts = [
   { name: "Figtree", data: fontData, weight: 400, style: "normal" },
@@ -27,8 +26,7 @@ async function fetchMeta(targetUrl) {
   const root = parse(html);
 
   const getMeta = (attr, value) => {
-    const el =
-      root.querySelector(`meta[${attr}="${value}"]`);
+    const el = root.querySelector(`meta[${attr}="${value}"]`);
     return el?.getAttribute("content") || "";
   };
 
@@ -94,61 +92,44 @@ function renderImage({ title, subtitle, width, height }) {
   );
 }
 
-const formHTML = readFileSync(join(__dirname, "public/index.html"), "utf-8");
+export default async (req) => {
+  const url = new URL(req.url);
+  const params = url.searchParams;
 
-const server = createServer(async (req, res) => {
-  const url = new URL(req.url, "http://localhost");
+  const targetUrl = params.get("url");
+  const size = params.get("size") || "og";
+  const { width, height } = SIZES[size] || SIZES.og;
 
-  if (url.pathname === "/" || url.pathname === "/form.html") {
-    res.writeHead(200, { "Content-Type": "text/html" });
-    res.end(formHTML);
-    return;
-  }
+  let title, subtitle;
 
-  // Main OG endpoint: /og?url=https://example.com
-  if (url.pathname === "/og") {
-    const targetUrl = url.searchParams.get("url");
-    if (!targetUrl) {
-      res.writeHead(400);
-      res.end("Missing ?url= parameter");
-      return;
-    }
+  if (targetUrl) {
     try {
       const meta = await fetchMeta(targetUrl);
-      const size = SIZES[url.searchParams.get("size")] || SIZES.og;
-      const response = renderImage({ ...meta, ...size });
-      const buffer = Buffer.from(await response.arrayBuffer());
-      res.writeHead(200, {
-        "Content-Type": "image/png",
-        "Cache-Control": "public, max-age=3600",
-      });
-      res.end(buffer);
+      title = meta.title;
+      subtitle = meta.subtitle;
     } catch (err) {
-      res.writeHead(500);
-      res.end(`Failed to fetch URL: ${err.message}`);
+      return new Response(`Failed to fetch URL: ${err.message}`, { status: 500 });
     }
-    return;
+  } else {
+    title = params.get("title") || "Untitled";
+    subtitle = params.get("subtitle") || "";
   }
 
-  // Form preview endpoint: /generate?title=...&subtitle=...&size=og
-  if (url.pathname === "/generate") {
-    const title = url.searchParams.get("title") || "Untitled";
-    const subtitle = url.searchParams.get("subtitle") || "";
-    const size = url.searchParams.get("size") || "og";
-    const { width, height } = SIZES[size] || SIZES.og;
+  const response = renderImage({ title, subtitle, width, height });
+  const buffer = Buffer.from(await response.arrayBuffer());
 
-    const response = renderImage({ title, subtitle, width, height });
-    const buffer = Buffer.from(await response.arrayBuffer());
-    res.writeHead(200, {
+  const cacheControl = targetUrl
+    ? "public, max-age=3600"
+    : "no-store";
+
+  return new Response(buffer, {
+    headers: {
       "Content-Type": "image/png",
-      "Cache-Control": "no-store",
-    });
-    res.end(buffer);
-    return;
-  }
+      "Cache-Control": cacheControl,
+    },
+  });
+};
 
-  res.writeHead(404);
-  res.end("Not found");
-});
-
-server.listen(3000, () => console.log("Preview at http://localhost:3000"));
+export const config = {
+  path: ["/og", "/generate"],
+};
