@@ -117,13 +117,16 @@ export default async (req) => {
   const buffer = Buffer.from(await response.arrayBuffer());
 
   const cacheControl = targetUrl
-    ? "public, max-age=3600"
+    ? "public, s-maxage=86400, stale-while-revalidate=604800"
     : "no-store";
 
   return new Response(buffer, {
     headers: {
       "Content-Type": "image/png",
       "Cache-Control": cacheControl,
+      "Netlify-CDN-Cache-Control": targetUrl
+        ? "public, s-maxage=86400, stale-while-revalidate=604800"
+        : "no-store",
     },
   });
 };

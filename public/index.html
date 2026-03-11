@@ -27,6 +27,7 @@
     .previews { display: flex; flex-direction: column; gap: 32px; }
     .preview { display: flex; flex-direction: column; gap: 8px; }
     .preview h2 { font-size: 18px; color: #666; }
+    .preview h2 span { font-weight: 400; font-size: 14px; color: #999; }
     .preview img { border: 1px solid #ddd; background: #fff; }
     .status { font-size: 14px; color: #888; margin-bottom: 16px; min-height: 20px; }
   </style>
@@ -66,15 +67,15 @@
 
   <div class="previews">
     <div class="preview">
-      <h2>OG Image (1200 x 630)</h2>
+      <h2>OG Image (1200 x 630) <span id="time-og"></span></h2>
       <img id="img-og" width="600" />
     </div>
     <div class="preview">
-      <h2>Portrait (1080 x 1350)</h2>
+      <h2>Portrait (1080 x 1350) <span id="time-portrait"></span></h2>
       <img id="img-portrait" width="400" />
     </div>
     <div class="preview">
-      <h2>Square (1080 x 1080)</h2>
+      <h2>Square (1080 x 1080) <span id="time-square"></span></h2>
       <img id="img-square" width="400" />
     </div>
   </div>
@@ -100,23 +101,33 @@
       });
     });
 
+    function loadImage(size, src) {
+      const img = document.getElementById(`img-${size}`);
+      const timeEl = document.getElementById(`time-${size}`);
+      const start = performance.now();
+      timeEl.textContent = "loading...";
+      img.onload = () => {
+        timeEl.textContent = `${Math.round(performance.now() - start)}ms`;
+      };
+      img.onerror = () => {
+        timeEl.textContent = "failed";
+      };
+      img.src = src;
+    }
+
     function updateImagesManual() {
       const params = new URLSearchParams({
         title: titleInput.value,
         subtitle: subtitleInput.value,
       });
-      const sizes = ["og", "portrait", "square"];
-      for (const size of sizes) {
-        const img = document.getElementById(`img-${size}`);
-        img.src = `/generate?${params}&size=${size}&t=${Date.now()}`;
+      for (const size of ["og", "portrait", "square"]) {
+        loadImage(size, `/generate?${params}&size=${size}&t=${Date.now()}`);
       }
     }
 
     function updateImagesFromUrl(targetUrl) {
-      const sizes = ["og", "portrait", "square"];
-      for (const size of sizes) {
-        const img = document.getElementById(`img-${size}`);
-        img.src = `/og?url=${encodeURIComponent(targetUrl)}&size=${size}&t=${Date.now()}`;
+      for (const size of ["og", "portrait", "square"]) {
+        loadImage(size, `/og?url=${encodeURIComponent(targetUrl)}&size=${size}&t=${Date.now()}`);
       }
     }
 
@@ -132,15 +143,7 @@
     fetchBtn.addEventListener("click", () => {
       const url = urlInput.value.trim();
       if (!url) return;
-      status.textContent = "Fetching...";
       updateImagesFromUrl(url);
-      // Clear status when first image loads
-      document.getElementById("img-og").onload = () => {
-        status.textContent = "";
-      };
-      document.getElementById("img-og").onerror = () => {
-        status.textContent = "Failed to generate image from URL";
-      };
     });
 
     urlInput.addEventListener("keydown", (e) => {
