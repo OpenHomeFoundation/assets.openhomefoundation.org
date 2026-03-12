@@ -1,5 +1,5 @@
 {
-  "domain": "*",
+  "domain": ["*"],
   "colors": {
     "background": "#1a1a2e",
     "text": "#ffffff",

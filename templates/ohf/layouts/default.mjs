@@ -1,4 +1,4 @@
-export default function render({ title, author, colors, assets }) {
+export default function render({ title, author, site, colors, assets }) {
   const styles = {
     display: "flex",
     flexDirection: "column",

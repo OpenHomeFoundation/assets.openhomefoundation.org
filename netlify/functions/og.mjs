@@ -2,7 +2,7 @@ import { ImageResponse } from "@vercel/og";
 import { readFileSync } from "fs";
 import { join } from "path";
 import { parse } from "node-html-parser";
-import { resolveTemplate, resolveTemplateById, loadLayout, loadAssets, fetchRemoteAssets, listTemplates, cleanTitle } from "../../lib/templates.mjs";
+import { resolveTemplate, resolveTemplateById, loadLayout, scrapeMeta, loadAssets, fetchRemoteAssets, listTemplates, cleanTitle } from "../../lib/templates.mjs";
 
 const fontsDir = join(process.cwd(), "fonts");
 
@@ -18,34 +18,9 @@ const SIZES = {
   square: { width: 1080, height: 1080 },
 };
 
-async function fetchMeta(targetUrl) {
+async function fetchHTML(targetUrl) {
   const res = await fetch(targetUrl);
-  const html = await res.text();
-  const root = parse(html);
-
-  const getMeta = (attr, value) => {
-    const el = root.querySelector(`meta[${attr}="${value}"]`);
-    return el?.getAttribute("content") || "";
-  };
-
-  return {
-    ogImage: getMeta("property", "og:image") || "",
-    title:
-      getMeta("name", "og-image:title") ||
-      getMeta("property", "og:title") ||
-      root.querySelector("title")?.text ||
-      "",
-    subtitle:
-      getMeta("name", "og-image:subtitle") ||
-      getMeta("property", "og:description") ||
-      getMeta("name", "description") ||
-      "",
-    author:
-      getMeta("name", "og-image:author") ||
-      getMeta("property", "og:author") ||
-      getMeta("name", "author") ||
-      "",
-  };
+  return res.text();
 }
 
 export default async (req) => {
@@ -61,14 +36,24 @@ export default async (req) => {
   const targetUrl = params.get("url");
   const size = params.get("size") || "og";
   const { width, height } = SIZES[size] || SIZES.og;
-
-  let title, subtitle, author;
-
+  const templateId = params.get("templateId") || "";
+  const layoutOverride = params.get("layout") || "";
   const ignoreOg = params.get("ignoreOg") === "1";
+
+  // Resolve template
+  const templateUrl = targetUrl || params.get("template") || "";
+  const { templateDir, layoutName, config } = templateId
+    ? resolveTemplateById(templateId, layoutOverride)
+    : resolveTemplate(templateUrl);
+
+  let meta = {};
+  let site = null;
 
   if (targetUrl) {
     try {
-      const meta = await fetchMeta(targetUrl);
+      const html = await fetchHTML(targetUrl);
+      site = parse(html);
+      meta = scrapeMeta(site);
 
       // If source has an og:image and we're not ignoring it, proxy it
       if (meta.ogImage && !ignoreOg) {
@@ -82,33 +67,27 @@ export default async (req) => {
           },
         });
       }
-
-      title = meta.title;
-      subtitle = meta.subtitle;
-      author = meta.author;
     } catch (err) {
       return new Response(`Failed to fetch URL: ${err.message}`, { status: 500 });
     }
   } else {
-    title = params.get("title") || "Untitled";
-    subtitle = params.get("subtitle") || "";
-    author = params.get("author") || "";
+    meta = {
+      title: params.get("title") || "Untitled",
+      subtitle: params.get("subtitle") || "",
+      author: params.get("author") || "",
+      release: params.get("release") || "",
+      installs: params.get("installs") || "",
+      codeowners: params.get("codeowners") || "",
+    };
   }
 
-  // Resolve template based on URL, template ID, or manual params
-  const templateId = params.get("templateId") || "";
-  const layoutOverride = params.get("layout") || "";
-  const templateUrl = targetUrl || params.get("template") || "";
-  const { templateDir, layoutName, config } = templateId
-    ? resolveTemplateById(templateId, layoutOverride)
-    : resolveTemplate(templateUrl);
   const layout = await loadLayout(templateDir, layoutName);
   const assets = await fetchRemoteAssets(loadAssets(templateDir));
 
   const element = layout({
-    title: cleanTitle(title, config),
-    subtitle,
-    author,
+    ...meta,
+    title: cleanTitle(meta.title, config),
+    site,
     colors: config.colors,
     width,
     height,

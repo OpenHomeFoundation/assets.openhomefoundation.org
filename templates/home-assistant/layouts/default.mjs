@@ -1,4 +1,4 @@
-export default function render({ title, subtitle, colors, width, assets }) {
+export default function render({ title, subtitle, site, colors, width, assets }) {
   return {
     type: "div",
     props: {
@@ -16,14 +16,14 @@ export default function render({ title, subtitle, colors, width, assets }) {
       children: [
         assets.logo
           ? {
-              type: "img",
-              props: {
-                src: assets.logo,
-                width: 80,
-                height: 80,
-                style: { marginBottom: "24px" },
-              },
-            }
+            type: "img",
+            props: {
+              src: assets.logo,
+              width: 80,
+              height: 80,
+              style: { marginBottom: "24px" },
+            },
+          }
           : null,
         {
           type: "div",
@@ -38,16 +38,16 @@ export default function render({ title, subtitle, colors, width, assets }) {
         },
         subtitle
           ? {
-              type: "div",
-              props: {
-                style: {
-                  fontSize: width > 1100 ? "32px" : "24px",
-                  color: colors.subtitle,
-                  marginTop: "20px",
-                },
-                children: subtitle,
+            type: "div",
+            props: {
+              style: {
+                fontSize: width > 1100 ? "32px" : "24px",
+                color: colors.subtitle,
+                marginTop: "20px",
               },
-            }
+              children: subtitle,
+            },
+          }
           : null,
       ].filter(Boolean),
     },

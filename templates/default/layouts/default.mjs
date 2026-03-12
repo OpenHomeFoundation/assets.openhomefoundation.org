@@ -1,4 +1,4 @@
-export default function render({ title, subtitle, colors, width }) {
+export default function render({ title, subtitle, site, colors, width }) {
   return {
     type: "div",
     props: {

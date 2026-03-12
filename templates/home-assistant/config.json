@@ -1,14 +1,28 @@
 {
-  "domain": "home-assistant.io",
+  "domain": [
+    "home-assistant.io",
+    "deploy-preview-44055--home-assistant-docs.netlify.app"
+  ],
   "colors": {
-    "background": "#03A9F4",
-    "text": "#ffffff",
-    "subtitle": "rgba(255, 255, 255, 0.8)",
-    "accent": "#0288D1"
+    "background": "#ffffff",
+    "text": "#1D2126",
+    "subtitle": "#A1A1A1"
+  },
+  "remoteAssets": {
+    "logo": "https://media.githubusercontent.com/media/OpenHomeFoundation/brand-assets/refs/heads/main/home-assistant/lockup/png/ha-lockup-main-color-on-light.png"
   },
   "routes": [
-    { "path": "/blog/*", "layout": "blog" },
-    { "path": "/integrations/*", "layout": "integration" },
-    { "path": "*", "layout": "default" }
+    {
+      "path": "/blog/*",
+      "layout": "blog"
+    },
+    {
+      "path": "/integrations/*",
+      "layout": "integration"
+    },
+    {
+      "path": "*",
+      "layout": "default"
+    }
   ]
 }
