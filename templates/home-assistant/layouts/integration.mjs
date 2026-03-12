@@ -63,7 +63,14 @@ function codeownersItem(codeowners) {
   };
 }
 
-export default function render({ title, subtitle, site, release, installs, codeowners, colors, width, assets }) {
+export default function render({ meta, site, config, assets, width, height }) {
+  const title = meta["og:title"] || meta._title || meta.title || "Untitled";
+  const subtitle = cleanText(site?.querySelector("article header")?.nextElementSibling)
+    || meta["og:description"] || meta.description || meta.subtitle || "";
+
+  const release = meta["og:image:release"];
+  const installs = meta["og:image:installs"];
+  const codeowners = meta["og:image:codeowners"];
   const hasStats = release || installs || codeowners;
 
   const statsRow = hasStats
@@ -94,8 +101,8 @@ export default function render({ title, subtitle, site, release, installs, codeo
         padding: "50px 80px",
         width: "100%",
         height: "100%",
-        backgroundColor: colors.background,
-        color: colors.text,
+        backgroundColor: config.colors.background,
+        color: config.colors.text,
         fontFamily: "Figtree",
       },
       children: [
@@ -126,7 +133,7 @@ export default function render({ title, subtitle, site, release, installs, codeo
                     fontWeight: 700,
                     lineHeight: 1.2,
                   },
-                  children: title || "Untitled",
+                  children: title,
                 },
               },
               {
@@ -134,11 +141,11 @@ export default function render({ title, subtitle, site, release, installs, codeo
                 props: {
                   style: {
                     fontSize: "28px",
-                    color: colors.subtitle,
+                    color: config.colors.subtitle,
                     lineHeight: 1.3,
                     marginTop: "20px",
                   },
-                  children: cleanText(site?.querySelector("article header")?.nextElementSibling) || subtitle || "",
+                  children: subtitle,
                 },
               },
               statsRow,

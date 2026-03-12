@@ -1,4 +1,7 @@
-export default function render({ title, subtitle, site, colors, width, assets }) {
+export default function render({ meta, site, config, assets, width, height }) {
+  const title = meta["og:title"] || meta._title || meta.title || "Untitled";
+  const subtitle = meta["og:description"] || meta.description || meta.subtitle || "";
+
   return {
     type: "div",
     props: {
@@ -9,8 +12,8 @@ export default function render({ title, subtitle, site, colors, width, assets })
         padding: "60px",
         width: "100%",
         height: "100%",
-        backgroundColor: colors.background,
-        color: colors.text,
+        backgroundColor: config.colors.background,
+        color: config.colors.text,
         fontFamily: "Figtree",
       },
       children: [
@@ -33,7 +36,7 @@ export default function render({ title, subtitle, site, colors, width, assets })
               fontWeight: 700,
               lineHeight: 1.2,
             },
-            children: title || "Untitled",
+            children: title,
           },
         },
         subtitle
@@ -42,7 +45,7 @@ export default function render({ title, subtitle, site, colors, width, assets })
             props: {
               style: {
                 fontSize: width > 1100 ? "32px" : "24px",
-                color: colors.subtitle,
+                color: config.colors.subtitle,
                 marginTop: "20px",
               },
               children: subtitle,

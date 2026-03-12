@@ -1,4 +1,12 @@
-export default function render({ title, author, site, colors, assets }) {
+export default function render({ meta, site, config, assets, width, height }) {
+  const title = meta["og:title"] || meta._title || meta.title || "Untitled";
+  const author = meta["og:author"] || meta.author || "";
+
+  // Strip title suffix like " – Open Home Foundation"
+  const cleanTitle = config.stripTitleSuffix
+    ? title.replace(/\s*[–|—\-]\s*[^–|—\-]+$/, "").trim()
+    : title;
+
   const styles = {
     display: "flex",
     flexDirection: "column",
@@ -6,7 +14,7 @@ export default function render({ title, author, site, colors, assets }) {
     justifyContent: "flex-end",
     width: "100%",
     height: "100%",
-    color: colors.text,
+    color: config.colors.text,
     backgroundSize: "cover",
     backgroundPosition: "center",
     padding: "60px",
@@ -47,7 +55,7 @@ export default function render({ title, author, site, colors, assets }) {
               overflow: "hidden",
               textOverflow: "ellipsis",
             },
-            children: title || "Untitled",
+            children: cleanTitle,
           },
         },
         author

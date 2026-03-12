@@ -2,7 +2,7 @@ import { ImageResponse } from "@vercel/og";
 import { readFileSync } from "fs";
 import { join } from "path";
 import { parse } from "node-html-parser";
-import { resolveTemplate, resolveTemplateById, loadLayout, scrapeMeta, loadAssets, fetchRemoteAssets, listTemplates, cleanTitle } from "../../lib/templates.mjs";
+import { resolveTemplate, resolveTemplateById, loadLayout, parseMeta, loadAssets, fetchRemoteAssets, listTemplates } from "../../lib/templates.mjs";
 
 const fontsDir = join(process.cwd(), "fonts");
 
@@ -17,11 +17,6 @@ const SIZES = {
   portrait: { width: 1080, height: 1350 },
   square: { width: 1080, height: 1080 },
 };
-
-async function fetchHTML(targetUrl) {
-  const res = await fetch(targetUrl);
-  return res.text();
-}
 
 export default async (req) => {
   const url = new URL(req.url);
@@ -40,7 +35,6 @@ export default async (req) => {
   const layoutOverride = params.get("layout") || "";
   const ignoreOg = params.get("ignoreOg") === "1";
 
-  // Resolve template
   const templateUrl = targetUrl || params.get("template") || "";
   const { templateDir, layoutName, config } = templateId
     ? resolveTemplateById(templateId, layoutOverride)
@@ -51,13 +45,13 @@ export default async (req) => {
 
   if (targetUrl) {
     try {
-      const html = await fetchHTML(targetUrl);
+      const html = await (await fetch(targetUrl)).text();
       site = parse(html);
-      meta = scrapeMeta(site);
+      meta = parseMeta(site);
 
       // If source has an og:image and we're not ignoring it, proxy it
-      if (meta.ogImage && !ignoreOg) {
-        const ogImageUrl = new URL(meta.ogImage, targetUrl).href;
+      if (meta["og:image"] && !ignoreOg) {
+        const ogImageUrl = new URL(meta["og:image"], targetUrl).href;
         const imgRes = await fetch(ogImageUrl);
         const buffer = Buffer.from(await imgRes.arrayBuffer());
         return new Response(buffer, {
@@ -71,29 +65,14 @@ export default async (req) => {
       return new Response(`Failed to fetch URL: ${err.message}`, { status: 500 });
     }
   } else {
-    meta = {
-      title: params.get("title") || "Untitled",
-      subtitle: params.get("subtitle") || "",
-      author: params.get("author") || "",
-      release: params.get("release") || "",
-      installs: params.get("installs") || "",
-      codeowners: params.get("codeowners") || "",
-    };
+    // Pass all query params as meta so layouts can use whatever they need
+    meta = Object.fromEntries(params.entries());
   }
 
   const layout = await loadLayout(templateDir, layoutName);
   const assets = await fetchRemoteAssets(loadAssets(templateDir));
 
-  const element = layout({
-    ...meta,
-    title: cleanTitle(meta.title, config),
-    site,
-    colors: config.colors,
-    width,
-    height,
-    assets,
-  });
-
+  const element = layout({ meta, site, config, assets, width, height });
   const response = new ImageResponse(element, { width, height, fonts });
   const buffer = Buffer.from(await response.arrayBuffer());
 

@@ -4,7 +4,7 @@ import { readFileSync } from "fs";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 import { parse } from "node-html-parser";
-import { resolveTemplate, resolveTemplateById, loadLayout, scrapeMeta, loadAssets, fetchRemoteAssets, listTemplates, cleanTitle } from "./lib/templates.mjs";
+import { resolveTemplate, resolveTemplateById, loadLayout, parseMeta, loadAssets, fetchRemoteAssets, listTemplates } from "./lib/templates.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -19,34 +19,6 @@ const SIZES = {
   portrait: { width: 1080, height: 1350 },
   square: { width: 1080, height: 1080 },
 };
-
-async function fetchHTML(targetUrl) {
-  const res = await fetch(targetUrl);
-  return res.text();
-}
-
-async function generateFromParams({ title, subtitle, author, release, installs, codeowners, templateUrl, templateId, layoutOverride, width, height }) {
-  const { templateDir, layoutName, config } = templateId
-    ? resolveTemplateById(templateId, layoutOverride)
-    : resolveTemplate(templateUrl);
-  const layout = await loadLayout(templateDir, layoutName);
-  const assets = await fetchRemoteAssets(loadAssets(templateDir));
-
-  const element = layout({
-    title: cleanTitle(title, config),
-    subtitle,
-    author,
-    release,
-    installs,
-    codeowners,
-    colors: config.colors,
-    width,
-    height,
-    assets,
-  });
-
-  return new ImageResponse(element, { width, height, fonts });
-}
 
 const formHTML = readFileSync(join(__dirname, "public/index.html"), "utf-8");
 
@@ -73,14 +45,15 @@ const server = createServer(async (req, res) => {
       return;
     }
     const ignoreOg = url.searchParams.get("ignoreOg") === "1";
+
     try {
-      const html = await fetchHTML(targetUrl);
+      const html = await (await fetch(targetUrl)).text();
       const site = parse(html);
-      const meta = scrapeMeta(site);
+      const meta = parseMeta(site);
 
       // If source has an og:image and we're not ignoring it, proxy it
-      if (meta.ogImage && !ignoreOg) {
-        const ogImageUrl = new URL(meta.ogImage, targetUrl).href;
+      if (meta["og:image"] && !ignoreOg) {
+        const ogImageUrl = new URL(meta["og:image"], targetUrl).href;
         const imgRes = await fetch(ogImageUrl);
         const buffer = Buffer.from(await imgRes.arrayBuffer());
         res.writeHead(200, {
@@ -96,15 +69,7 @@ const server = createServer(async (req, res) => {
       const layout = await loadLayout(templateDir, layoutName);
       const assets = await fetchRemoteAssets(loadAssets(templateDir));
 
-      const element = layout({
-        ...meta,
-        title: cleanTitle(meta.title, config),
-        site,
-        colors: config.colors,
-        assets,
-        ...size,
-      });
-
+      const element = layout({ meta, site, config, assets, ...size });
       const response = new ImageResponse(element, { ...size, fonts });
       const buffer = Buffer.from(await response.arrayBuffer());
       res.writeHead(200, {
@@ -120,19 +85,23 @@ const server = createServer(async (req, res) => {
   }
 
   if (url.pathname === "/generate") {
-    const title = url.searchParams.get("title") || "Untitled";
-    const subtitle = url.searchParams.get("subtitle") || "";
-    const author = url.searchParams.get("author") || "";
-    const release = url.searchParams.get("release") || "";
-    const installs = url.searchParams.get("installs") || "";
-    const codeowners = url.searchParams.get("codeowners") || "";
     const size = url.searchParams.get("size") || "og";
     const templateId = url.searchParams.get("templateId") || "";
     const layoutOverride = url.searchParams.get("layout") || "";
     const templateUrl = url.searchParams.get("template") || "";
     const { width, height } = SIZES[size] || SIZES.og;
 
-    const response = await generateFromParams({ title, subtitle, author, release, installs, codeowners, templateUrl, templateId, layoutOverride, width, height });
+    // Pass all query params as meta so layouts can use whatever they need
+    const meta = Object.fromEntries(url.searchParams.entries());
+
+    const { templateDir, layoutName, config } = templateId
+      ? resolveTemplateById(templateId, layoutOverride)
+      : resolveTemplate(templateUrl);
+    const layout = await loadLayout(templateDir, layoutName);
+    const assets = await fetchRemoteAssets(loadAssets(templateDir));
+
+    const element = layout({ meta, site: null, config, assets, width, height });
+    const response = new ImageResponse(element, { width, height, fonts });
     const buffer = Buffer.from(await response.arrayBuffer());
     res.writeHead(200, {
       "Content-Type": "image/png",
