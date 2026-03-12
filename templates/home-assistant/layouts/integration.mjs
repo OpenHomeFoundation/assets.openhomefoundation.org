@@ -30,7 +30,10 @@ function statItem(value, label) {
 }
 
 function codeownersItem(codeowners) {
-  const owners = codeowners.split(",").map((s) => s.trim().replace(/^@/, ""));
+  const owners = [...new Set(codeowners.split(",").map((s) => {
+    const name = s.trim().replace(/^@/, "");
+    return name.includes("/") ? name.split("/")[0] : name;
+  }))];
   return {
     type: "div",
     props: {

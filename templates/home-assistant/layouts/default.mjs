@@ -8,7 +8,6 @@ export default function render({ meta, site, config, assets, width, height }) {
       style: {
         display: "flex",
         flexDirection: "column",
-        justifyContent: "center",
         padding: "60px",
         width: "100%",
         height: "100%",
@@ -22,9 +21,8 @@ export default function render({ meta, site, config, assets, width, height }) {
             type: "img",
             props: {
               src: assets.logo,
-              width: 80,
-              height: 80,
-              style: { marginBottom: "24px" },
+              height: 40,
+              style: { objectFit: "contain", objectPosition: "left" },
             },
           }
           : null,
@@ -32,26 +30,38 @@ export default function render({ meta, site, config, assets, width, height }) {
           type: "div",
           props: {
             style: {
-              fontSize: width > 1100 ? "64px" : "48px",
-              fontWeight: 700,
-              lineHeight: 1.2,
+              display: "flex",
+              flexDirection: "column",
+              marginTop: "auto",
             },
-            children: title,
+            children: [
+              {
+                type: "div",
+                props: {
+                  style: {
+                    fontSize: width > 1100 ? "64px" : "48px",
+                    fontWeight: 700,
+                    lineHeight: 1.2,
+                  },
+                  children: title,
+                },
+              },
+              subtitle
+                ? {
+                  type: "div",
+                  props: {
+                    style: {
+                      fontSize: width > 1100 ? "32px" : "24px",
+                      color: config.colors.subtitle,
+                      marginTop: "20px",
+                    },
+                    children: subtitle,
+                  },
+                }
+                : null,
+            ].filter(Boolean),
           },
         },
-        subtitle
-          ? {
-            type: "div",
-            props: {
-              style: {
-                fontSize: width > 1100 ? "32px" : "24px",
-                color: config.colors.subtitle,
-                marginTop: "20px",
-              },
-              children: subtitle,
-            },
-          }
-          : null,
       ].filter(Boolean),
     },
   };

@@ -1,6 +1,6 @@
 import { createServer } from "http";
 import { ImageResponse } from "@vercel/og";
-import { readFileSync } from "fs";
+import { readFileSync, existsSync } from "fs";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 import { parse } from "node-html-parser";
@@ -111,8 +111,16 @@ const server = createServer(async (req, res) => {
     return;
   }
 
+  // Serve static files from project root
+  const filePath = join(__dirname, url.pathname);
+  if (url.pathname.endsWith(".html") && existsSync(filePath)) {
+    res.writeHead(200, { "Content-Type": "text/html" });
+    res.end(readFileSync(filePath, "utf-8"));
+    return;
+  }
+
   res.writeHead(404);
   res.end("Not found");
 });
 
-server.listen(3000, () => console.log("Preview at http://localhost:3000"));
+server.listen(5050, () => console.log("Preview at http://localhost:5050"));
