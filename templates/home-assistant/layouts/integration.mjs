@@ -4,6 +4,12 @@ function cleanText(el) {
   return el.text.trim();
 }
 
+function truncate(text, maxWords) {
+  const words = text.split(/\s+/);
+  if (words.length <= maxWords) return text;
+  return words.slice(0, maxWords).join(" ") + "…";
+}
+
 function statItem(value, label) {
   return {
     type: "div",
@@ -43,15 +49,32 @@ function codeownersItem(codeowners) {
           type: "div",
           props: {
             style: { display: "flex", gap: "12px" },
-            children: owners.map((username) => ({
-              type: "img",
-              props: {
-                src: `https://github.com/${username}.png?size=70`,
-                width: 70,
-                height: 70,
-                style: { borderRadius: "50%" },
-              },
-            })),
+            children: [
+              ...owners.slice(0, 5).map((username) => ({
+                type: "img",
+                props: {
+                  src: `https://github.com/${username}.png?size=70`,
+                  width: 70,
+                  height: 70,
+                  style: { borderRadius: "50%" },
+                },
+              })),
+              owners.length > 5
+                ? {
+                  type: "div",
+                  props: {
+                    style: {
+                      display: "flex",
+                      alignItems: "center",
+                      fontSize: "28px",
+                      fontWeight: 600,
+                      color: "#A1A1A1",
+                    },
+                    children: `+${owners.length - 5}`,
+                  },
+                }
+                : null,
+            ].filter(Boolean),
           },
         },
         {
@@ -67,9 +90,9 @@ function codeownersItem(codeowners) {
 }
 
 export default function render({ meta, site, config, assets, width, height }) {
-  const title = meta["og:title"] || meta._title || meta.title || "Untitled";
-  const subtitle = cleanText(site?.querySelector("article header")?.nextElementSibling)
-    || meta["og:description"] || meta.description || meta.subtitle || "";
+  const title = truncate(meta["og:title"] || meta._title || meta.title || "Untitled", 15);
+  const subtitle = truncate(cleanText(site?.querySelector("article header~p"))
+    || meta["og:description"] || meta.description || meta.subtitle || "", 50);
 
   const release = meta["og:image:release"];
   const installs = meta["og:image:installs"];
@@ -101,7 +124,7 @@ export default function render({ meta, site, config, assets, width, height }) {
       style: {
         display: "flex",
         flexDirection: "column",
-        padding: "50px 80px",
+        padding: "60px",
         width: "100%",
         height: "100%",
         backgroundColor: config.colors.background,

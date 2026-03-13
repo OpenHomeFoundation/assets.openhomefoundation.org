@@ -35,23 +35,21 @@ export default async (req) => {
   const layoutOverride = params.get("layout") || "";
   const ignoreOg = params.get("ignoreOg") === "1";
 
-  const templateUrl = targetUrl || params.get("template") || "";
-  const { templateDir, layoutName, config } = templateId
-    ? resolveTemplateById(templateId, layoutOverride)
-    : resolveTemplate(templateUrl);
-
   let meta = {};
   let site = null;
+  let finalUrl = targetUrl;
 
   if (targetUrl) {
     try {
-      const html = await (await fetch(targetUrl)).text();
+      const pageRes = await fetch(targetUrl);
+      finalUrl = pageRes.url || targetUrl;
+      const html = await pageRes.text();
       site = parse(html);
       meta = parseMeta(site);
 
       // If source has an og:image and we're not ignoring it, proxy it
       if (meta["og:image"] && !ignoreOg) {
-        const ogImageUrl = new URL(meta["og:image"], targetUrl).href;
+        const ogImageUrl = new URL(meta["og:image"], finalUrl).href;
         const imgRes = await fetch(ogImageUrl);
         const buffer = Buffer.from(await imgRes.arrayBuffer());
         return new Response(buffer, {
@@ -68,6 +66,11 @@ export default async (req) => {
     // Pass all query params as meta so layouts can use whatever they need
     meta = Object.fromEntries(params.entries());
   }
+
+  const templateUrl = finalUrl || params.get("template") || "";
+  const { templateDir, layoutName, config } = templateId
+    ? resolveTemplateById(templateId, layoutOverride)
+    : resolveTemplate(templateUrl);
 
   const layout = await loadLayout(templateDir, layoutName);
   const assets = await fetchRemoteAssets(loadAssets(templateDir));

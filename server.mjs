@@ -47,13 +47,15 @@ const server = createServer(async (req, res) => {
     const ignoreOg = url.searchParams.get("ignoreOg") === "1";
 
     try {
-      const html = await (await fetch(targetUrl)).text();
+      const pageRes = await fetch(targetUrl);
+      const finalUrl = pageRes.url || targetUrl;
+      const html = await pageRes.text();
       const site = parse(html);
       const meta = parseMeta(site);
 
       // If source has an og:image and we're not ignoring it, proxy it
       if (meta["og:image"] && !ignoreOg) {
-        const ogImageUrl = new URL(meta["og:image"], targetUrl).href;
+        const ogImageUrl = new URL(meta["og:image"], finalUrl).href;
         const imgRes = await fetch(ogImageUrl);
         const buffer = Buffer.from(await imgRes.arrayBuffer());
         res.writeHead(200, {
@@ -65,7 +67,7 @@ const server = createServer(async (req, res) => {
       }
 
       const size = SIZES[url.searchParams.get("size")] || SIZES.og;
-      const { templateDir, layoutName, config } = resolveTemplate(targetUrl);
+      const { templateDir, layoutName, config } = resolveTemplate(finalUrl);
       const layout = await loadLayout(templateDir, layoutName);
       const assets = await fetchRemoteAssets(loadAssets(templateDir));
 
