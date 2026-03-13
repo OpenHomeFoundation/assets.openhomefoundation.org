@@ -65,6 +65,7 @@ function codeownersItem(codeowners) {
                     style: {
                       display: "flex",
                       alignItems: "center",
+                      marginLeft: "8px",
                       fontSize: "28px",
                       fontWeight: 600,
                       color: "#A1A1A1",
@@ -91,7 +92,7 @@ function codeownersItem(codeowners) {
 export default function render({ meta, site, config, assets, width, height }) {
   const title = truncate(meta["og:title"] || meta._title || meta.title || "Untitled", 55);
   const subtitle = truncate(cleanText(site?.querySelector("article header~p"))
-    || meta["og:description"] || meta.description || meta.subtitle || "", 200);
+    || meta["og:description"] || meta.description || meta.subtitle || "", 300);
 
   const release = meta["og:image:release"];
   const installs = meta["og:image:installs"];
