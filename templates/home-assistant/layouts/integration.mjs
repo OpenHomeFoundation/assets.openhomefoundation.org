@@ -4,10 +4,9 @@ function cleanText(el) {
   return el.text.trim();
 }
 
-function truncate(text, maxWords) {
-  const words = text.split(/\s+/);
-  if (words.length <= maxWords) return text;
-  return words.slice(0, maxWords).join(" ") + "…";
+function truncate(text, maxChars) {
+  if (text.length <= maxChars) return text;
+  return text.slice(0, maxChars).trimEnd() + "…";
 }
 
 function statItem(value, label) {
@@ -90,9 +89,9 @@ function codeownersItem(codeowners) {
 }
 
 export default function render({ meta, site, config, assets, width, height }) {
-  const title = truncate(meta["og:title"] || meta._title || meta.title || "Untitled", 15);
+  const title = truncate(meta["og:title"] || meta._title || meta.title || "Untitled", 55);
   const subtitle = truncate(cleanText(site?.querySelector("article header~p"))
-    || meta["og:description"] || meta.description || meta.subtitle || "", 50);
+    || meta["og:description"] || meta.description || meta.subtitle || "", 200);
 
   const release = meta["og:image:release"];
   const installs = meta["og:image:installs"];
