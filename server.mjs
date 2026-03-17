@@ -20,20 +20,96 @@ const SIZES = {
   square: { width: 1080, height: 1080 },
 };
 
-const formHTML = readFileSync(join(__dirname, "public/index.html"), "utf-8");
+const formHTML = readFileSync(join(__dirname, "public/generate-opengraph/index.html"), "utf-8");
 
 const server = createServer(async (req, res) => {
   const url = new URL(req.url, "http://localhost");
 
-  if (url.pathname === "/" || url.pathname === "/form.html") {
+  if (url.pathname === "/generate-opengraph" || url.pathname === "/generate-opengraph/") {
     res.writeHead(200, { "Content-Type": "text/html" });
     res.end(formHTML);
     return;
   }
 
-  if (url.pathname === "/templates") {
+  if (url.pathname === "/generate-opengraph/templates") {
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify(listTemplates()));
+    return;
+  }
+
+  if (url.pathname === "/generate-opengraph/debug") {
+    const targetUrl = url.searchParams.get("url");
+    if (!targetUrl) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Missing ?url= parameter" }));
+      return;
+    }
+
+    const debug = { inputUrl: targetUrl, steps: [] };
+    let finalUrl = targetUrl;
+    let meta = {};
+
+    try {
+      const pageRes = await fetch(targetUrl);
+      finalUrl = pageRes.url || targetUrl;
+      debug.finalUrl = finalUrl;
+      debug.redirected = finalUrl !== targetUrl;
+      if (debug.redirected) {
+        debug.steps.push(`Followed redirect: ${targetUrl} → ${finalUrl}`);
+      } else {
+        debug.steps.push(`No redirect — final URL is same as input`);
+      }
+
+      const html = await pageRes.text();
+      const site = parse(html);
+      meta = parseMeta(site);
+      debug.meta = meta;
+      debug.steps.push(`Parsed ${Object.keys(meta).length} meta tags from page`);
+    } catch (err) {
+      debug.error = err.message;
+      debug.steps.push(`Failed to fetch URL: ${err.message}`);
+      res.writeHead(500, { "Content-Type": "application/json" });
+      res.end(JSON.stringify(debug));
+      return;
+    }
+
+    let parsedUrl;
+    try { parsedUrl = new URL(finalUrl); } catch { parsedUrl = null; }
+
+    const allTemplates = listTemplates();
+    debug.availableTemplates = allTemplates.map((t) => ({ id: t.id, domain: t.domain }));
+
+    const { templateDir, layoutName, config } = resolveTemplate(finalUrl);
+    const domains = Array.isArray(config.domain) ? config.domain : [config.domain];
+    const isWildcard = domains.length === 1 && domains[0] === "*";
+
+    if (isWildcard) {
+      debug.steps.push(`No template matched hostname "${parsedUrl?.hostname}" — using default template`);
+    } else {
+      debug.steps.push(`Hostname "${parsedUrl?.hostname}" matched template "${templateDir}" (domains: ${domains.join(", ")})`);
+    }
+
+    debug.matchedTemplate = templateDir;
+
+    const matchedRoute = config.routes.find((r) => {
+      if (r.path === "*") return true;
+      const regex = new RegExp("^" + r.path.replace(/\*/g, ".*") + "$");
+      return regex.test(parsedUrl?.pathname);
+    });
+
+    if (matchedRoute) {
+      if (matchedRoute.path === "*") {
+        debug.steps.push(`No specific route matched pathname "${parsedUrl?.pathname}" — using wildcard route → layout "${layoutName}"`);
+      } else {
+        debug.steps.push(`Pathname "${parsedUrl?.pathname}" matched route "${matchedRoute.path}" → layout "${layoutName}"`);
+      }
+    }
+
+    debug.matchedLayout = layoutName;
+    debug.allRoutes = config.routes;
+
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify(debug));
     return;
   }
 

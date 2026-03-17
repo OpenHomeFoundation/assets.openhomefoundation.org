@@ -32,6 +32,16 @@
     .options { margin-bottom: 24px; font-size: 14px; display: flex; gap: 16px; }
     .options label { cursor: pointer; }
     .status { font-size: 14px; color: #888; margin-bottom: 16px; min-height: 20px; }
+    .debug-panel { background: #1a1a2e; color: #e0e0e0; border-radius: 8px; padding: 20px; margin-bottom: 24px; font-size: 13px; font-family: monospace; display: none; }
+    .debug-panel.visible { display: block; }
+    .debug-panel h3 { font-family: Figtree, sans-serif; font-size: 14px; color: #fff; margin-bottom: 12px; }
+    .debug-steps { list-style: none; padding: 0; margin: 0 0 16px 0; }
+    .debug-steps li { padding: 4px 0; border-bottom: 1px solid #2a2a4e; }
+    .debug-steps li:last-child { border-bottom: none; }
+    .debug-steps .step-num { color: #666; margin-right: 8px; }
+    .debug-result { display: flex; gap: 24px; flex-wrap: wrap; }
+    .debug-result dt { color: #888; font-size: 12px; text-transform: uppercase; margin-bottom: 2px; }
+    .debug-result dd { color: #fff; margin-bottom: 12px; }
   </style>
 </head>
 <body>
@@ -77,6 +87,11 @@
       <button class="btn" id="fetch-btn">Fetch</button>
     </div>
     <div class="status" id="status"></div>
+    <div class="debug-panel" id="debug-panel">
+      <h3>Template Resolution</h3>
+      <ol class="debug-steps" id="debug-steps"></ol>
+      <div class="debug-result" id="debug-result"></div>
+    </div>
   </div>
 
   <div class="options">
@@ -116,7 +131,7 @@
     let templatesData = [];
 
     // Load templates
-    fetch("/templates")
+    fetch("/generate-opengraph/templates")
       .then((r) => r.json())
       .then((data) => {
         templatesData = data;
@@ -189,7 +204,7 @@
     async function updateImagesFromUrl(targetUrl) {
       const extra = ignoreOg.checked ? "&ignoreOg=1" : "";
       for (const size of ["og", "portrait", "square"]) {
-        await loadImage(size, `/og?url=${encodeURIComponent(targetUrl)}&size=${size}${extra}`);
+        await loadImage(size, `/opengraph?url=${encodeURIComponent(targetUrl)}&size=${size}${extra}`);
       }
     }
 
@@ -206,9 +221,42 @@
       debounceTimer = setTimeout(updateImagesManual, 300);
     });
 
+    const debugPanel = document.getElementById("debug-panel");
+    const debugSteps = document.getElementById("debug-steps");
+    const debugResult = document.getElementById("debug-result");
+
+    async function fetchDebug(targetUrl) {
+      debugPanel.classList.remove("visible");
+      try {
+        const res = await fetch(`/generate-opengraph/debug?url=${encodeURIComponent(targetUrl)}`);
+        const data = await res.json();
+
+        debugSteps.innerHTML = data.steps
+          .map((s, i) => `<li><span class="step-num">${i + 1}.</span>${s}</li>`)
+          .join("");
+
+        debugResult.innerHTML = `
+          <dl>
+            <dt>Template</dt><dd>${data.matchedTemplate || "—"}</dd>
+          </dl>
+          <dl>
+            <dt>Layout</dt><dd>${data.matchedLayout || "—"}</dd>
+          </dl>
+          <dl>
+            <dt>Final URL</dt><dd>${data.finalUrl || "—"}</dd>
+          </dl>
+        `;
+
+        debugPanel.classList.add("visible");
+      } catch {
+        // silently skip debug if it fails
+      }
+    }
+
     fetchBtn.addEventListener("click", () => {
       const url = urlInput.value.trim();
       if (!url) return;
+      fetchDebug(url);
       updateImagesFromUrl(url);
     });
 
