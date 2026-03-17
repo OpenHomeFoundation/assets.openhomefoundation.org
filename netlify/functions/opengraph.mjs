@@ -102,22 +102,55 @@ export default async (req) => {
   }
 
   const params = url.searchParams;
-  const targetUrl = params.get("url");
-  const size = params.get("size") || "og";
-  const { width, height } = SIZES[size] || SIZES.og;
-  const templateId = params.get("templateId") || "";
-  const layoutOverride = params.get("layout") || "";
-  const ignoreOg = params.get("ignoreOg") === "1";
 
-  // /opengraph requires a URL that matches an allowed domain
+  // /opengraph — always OG size, always generates (no og:image proxy)
   if (url.pathname === "/opengraph") {
+    const targetUrl = params.get("url");
     if (!targetUrl) {
       return new Response("Missing ?url= parameter", { status: 400 });
     }
     if (!isDomainAllowed(targetUrl)) {
       return new Response("Domain not allowed", { status: 403 });
     }
+
+    const { width, height } = SIZES.og;
+    let meta = {};
+    let site = null;
+
+    try {
+      const pageRes = await fetch(targetUrl);
+      const finalUrl = pageRes.url || targetUrl;
+      const html = await pageRes.text();
+      site = parse(html);
+      meta = parseMeta(site);
+
+      const { templateDir, layoutName, config } = resolveTemplate(finalUrl);
+      const layout = await loadLayout(templateDir, layoutName);
+      const assets = await fetchRemoteAssets(loadAssets(templateDir));
+
+      const element = layout({ meta, site, config, assets, width, height });
+      const response = new ImageResponse(element, { width, height, fonts });
+      const buffer = Buffer.from(await response.arrayBuffer());
+
+      return new Response(buffer, {
+        headers: {
+          "Content-Type": "image/png",
+          "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=604800",
+          "Netlify-CDN-Cache-Control": "public, s-maxage=86400, stale-while-revalidate=604800",
+        },
+      });
+    } catch (err) {
+      return new Response(`Failed to fetch URL: ${err.message}`, { status: 500 });
+    }
   }
+
+  // /generate — manual params, supports size/ignoreOg
+  const targetUrl = params.get("url");
+  const size = params.get("size") || "og";
+  const { width, height } = SIZES[size] || SIZES.og;
+  const templateId = params.get("templateId") || "";
+  const layoutOverride = params.get("layout") || "";
+  const ignoreOg = params.get("ignoreOg") === "1";
 
   let meta = {};
   let site = null;

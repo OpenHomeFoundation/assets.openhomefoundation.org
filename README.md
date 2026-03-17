@@ -17,13 +17,11 @@ Layouts own all rendering logic. The service layer is intentionally generic — 
 
 ### `GET /opengraph?url=<url>`
 
-Fetches a page and generates an OG image based on its content. The URL must match an allowed domain from one of the template configs. If the page already has an `og:image` meta tag, it proxies that image instead (pass `&ignoreOg=1` to override).
+Fetches a page and generates an OG image (1200x630) based on its content. The URL must match an allowed domain from one of the template configs. Always generates a fresh image — existing `og:image` tags on the page are ignored.
 
 | Param | Description |
 |-------|-------------|
 | `url` | **(required)** The page URL to generate an image for. Must match an allowed domain. |
-| `size` | `og` (1200x630, default), `portrait` (1080x1350), `square` (1080x1080) |
-| `ignoreOg` | Set to `1` to generate an image even if the page has an existing `og:image` |
 
 ### `GET /generate?templateId=<id>&title=<title>`
 

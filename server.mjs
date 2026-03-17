@@ -125,7 +125,6 @@ const server = createServer(async (req, res) => {
       res.end("Domain not allowed");
       return;
     }
-    const ignoreOg = url.searchParams.get("ignoreOg") === "1";
 
     try {
       const pageRes = await fetch(targetUrl);
@@ -134,26 +133,13 @@ const server = createServer(async (req, res) => {
       const site = parse(html);
       const meta = parseMeta(site);
 
-      // If source has an og:image and we're not ignoring it, proxy it
-      if (meta["og:image"] && !ignoreOg) {
-        const ogImageUrl = new URL(meta["og:image"], finalUrl).href;
-        const imgRes = await fetch(ogImageUrl);
-        const buffer = Buffer.from(await imgRes.arrayBuffer());
-        res.writeHead(200, {
-          "Content-Type": imgRes.headers.get("content-type") || "image/png",
-          "Cache-Control": "public, max-age=3600",
-        });
-        res.end(buffer);
-        return;
-      }
-
-      const size = SIZES[url.searchParams.get("size")] || SIZES.og;
+      const { width, height } = SIZES.og;
       const { templateDir, layoutName, config } = resolveTemplate(finalUrl);
       const layout = await loadLayout(templateDir, layoutName);
       const assets = await fetchRemoteAssets(loadAssets(templateDir));
 
-      const element = layout({ meta, site, config, assets, ...size });
-      const response = new ImageResponse(element, { ...size, fonts });
+      const element = layout({ meta, site, config, assets, width, height });
+      const response = new ImageResponse(element, { width, height, fonts });
       const buffer = Buffer.from(await response.arrayBuffer());
       res.writeHead(200, {
         "Content-Type": "image/png",
