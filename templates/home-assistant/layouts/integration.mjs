@@ -110,7 +110,7 @@ export default function render({ meta, site, config, assets, width, height }) {
           marginTop: "30px",
         },
         children: [
-          release ? statItem(release, "Release") : null,
+          release ? statItem(release, "Introduced") : null,
           installs ? statItem(installs, "Installations") : null,
           codeowners ? codeownersItem(codeowners) : null,
         ].filter(Boolean),
