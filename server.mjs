@@ -37,7 +37,7 @@ const server = createServer(async (req, res) => {
     return;
   }
 
-  if (url.pathname === "/og") {
+  if (url.pathname === "/opengraph") {
     const targetUrl = url.searchParams.get("url");
     if (!targetUrl) {
       res.writeHead(400);

@@ -95,5 +95,5 @@ export default async (req) => {
 };
 
 export const config = {
-  path: ["/og", "/generate", "/templates"],
+  path: ["/opengraph", "/generate", "/templates"],
 };
