@@ -4,7 +4,7 @@ import { readFileSync, existsSync } from "fs";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 import { parse } from "node-html-parser";
-import { resolveTemplate, resolveTemplateById, loadLayout, parseMeta, loadAssets, fetchRemoteAssets, listTemplates } from "./lib/templates.mjs";
+import { resolveTemplate, resolveTemplateById, loadLayout, parseMeta, loadAssets, fetchRemoteAssets, listTemplates, isDomainAllowed } from "./lib/templates.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -118,6 +118,11 @@ const server = createServer(async (req, res) => {
     if (!targetUrl) {
       res.writeHead(400);
       res.end("Missing ?url= parameter");
+      return;
+    }
+    if (!isDomainAllowed(targetUrl)) {
+      res.writeHead(403);
+      res.end("Domain not allowed");
       return;
     }
     const ignoreOg = url.searchParams.get("ignoreOg") === "1";

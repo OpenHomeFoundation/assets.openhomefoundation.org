@@ -1,7 +1,7 @@
 {
   "domain": [
     "home-assistant.io",
-    "deploy-preview-44055--home-assistant-docs.netlify.app"
+    "/deploy-preview-\\d+--home-assistant-docs\\.netlify\\.app/"
   ],
   "colors": {
     "background": "#ffffff",

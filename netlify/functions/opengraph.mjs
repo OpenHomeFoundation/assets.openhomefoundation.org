@@ -2,7 +2,7 @@ import { ImageResponse } from "@vercel/og";
 import { readFileSync } from "fs";
 import { join } from "path";
 import { parse } from "node-html-parser";
-import { resolveTemplate, resolveTemplateById, loadLayout, parseMeta, loadAssets, fetchRemoteAssets, listTemplates } from "../../lib/templates.mjs";
+import { resolveTemplate, resolveTemplateById, loadLayout, parseMeta, loadAssets, fetchRemoteAssets, listTemplates, isDomainAllowed } from "../../lib/templates.mjs";
 
 const fontsDir = join(process.cwd(), "fonts");
 
@@ -108,6 +108,16 @@ export default async (req) => {
   const templateId = params.get("templateId") || "";
   const layoutOverride = params.get("layout") || "";
   const ignoreOg = params.get("ignoreOg") === "1";
+
+  // /opengraph requires a URL that matches an allowed domain
+  if (url.pathname === "/opengraph") {
+    if (!targetUrl) {
+      return new Response("Missing ?url= parameter", { status: 400 });
+    }
+    if (!isDomainAllowed(targetUrl)) {
+      return new Response("Domain not allowed", { status: 403 });
+    }
+  }
 
   let meta = {};
   let site = null;
