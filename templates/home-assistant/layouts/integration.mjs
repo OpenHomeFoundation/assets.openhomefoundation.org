@@ -52,9 +52,9 @@ function codeownersItem(codeowners) {
               ...owners.slice(0, 5).map((username) => ({
                 type: "img",
                 props: {
-                  src: `https://github.com/${username}.png?size=50`,
-                  width: 50,
-                  height: 50,
+                  src: `https://github.com/${username}.png?size=60`,
+                  width: 60,
+                  height: 60,
                   style: { borderRadius: "50%" },
                 },
               })),
