@@ -137,7 +137,8 @@ export default async (req) => {
         headers: {
           "Content-Type": "image/png",
           "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=604800",
-          "Netlify-CDN-Cache-Control": "public, s-maxage=86400, stale-while-revalidate=604800",
+          "Netlify-CDN-Cache-Control": "public, durable, s-maxage=86400, stale-while-revalidate=604800",
+          "Netlify-Vary": "query=url",
         },
       });
     } catch (err) {
