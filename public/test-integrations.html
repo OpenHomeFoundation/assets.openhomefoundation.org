@@ -66,20 +66,7 @@
 
 <body>
   <h1>Integration OG Images (1461)</h1>
-  <div class="controls">
-    <input type="checkbox" id="bypass-cache">
-    <label for="bypass-cache">Bypass cache (append cache-busting param)</label>
-  </div>
   <div class="grid">
-    <script>
-      document.getElementById("bypass-cache").addEventListener("change", (e) => {
-        const imgs = document.querySelectorAll(".card img");
-        imgs.forEach((img) => {
-          const base = img.src.replace(/&_cb=\d+/, "");
-          img.src = e.target.checked ? base + "&_cb=" + Date.now() : base;
-        });
-      });
-    </script>
     <div class="card"><img src="/opengraph?url=https://www.home-assistant.io/integrations/onewire/" loading="lazy" /><a
         href="https://www.home-assistant.io/integrations/onewire/" target="_blank"></a></div>
     <div class="card"><img src="/opengraph?url=https://www.home-assistant.io/integrations/seventeentrack/"
