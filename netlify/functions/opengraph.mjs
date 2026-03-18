@@ -8,6 +8,7 @@ const fontsDir = join(process.cwd(), "fonts");
 
 const fonts = [
   { name: "Figtree", data: readFileSync(join(fontsDir, "Figtree-Regular.ttf")), weight: 400, style: "normal" },
+  { name: "Figtree", data: readFileSync(join(fontsDir, "Figtree-SemiBold.ttf")), weight: 600, style: "normal" },
   { name: "Figtree", data: readFileSync(join(fontsDir, "Figtree-Bold.ttf")), weight: 700, style: "normal" },
   { name: "Instrument Sans", data: readFileSync(join(fontsDir, "InstrumentSans-Regular.ttf")), weight: 400, style: "normal" },
 ];

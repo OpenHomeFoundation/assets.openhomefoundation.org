@@ -25,7 +25,7 @@ function statItem(value, label) {
         {
           type: "div",
           props: {
-            style: { fontSize: "20px", color: "#A1A1A1" },
+            style: { fontSize: "20px", color: "#A1A1A1", fontWeight: 600 },
             children: label,
           },
         },
@@ -52,9 +52,9 @@ function codeownersItem(codeowners) {
               ...owners.slice(0, 5).map((username) => ({
                 type: "img",
                 props: {
-                  src: `https://github.com/${username}.png?size=70`,
-                  width: 70,
-                  height: 70,
+                  src: `https://github.com/${username}.png?size=50`,
+                  width: 50,
+                  height: 50,
                   style: { borderRadius: "50%" },
                 },
               })),
@@ -80,7 +80,7 @@ function codeownersItem(codeowners) {
         {
           type: "div",
           props: {
-            style: { fontSize: "20px", color: "#A1A1A1" },
+            style: { fontSize: "20px", color: "#A1A1A1", fontWeight: 600 },
             children: "Code owners",
           },
         },
@@ -94,10 +94,9 @@ export default function render({ meta, site, config, assets, width, height }) {
   const subtitle = truncate(cleanText(site?.querySelector("article header~p"))
     || meta["og:description"] || meta.description || meta.subtitle || "", 300);
 
-  const release = meta["og:image:release"];
   const installs = meta["og:image:installs"];
   const codeowners = meta["og:image:codeowners"];
-  const hasStats = release || installs || codeowners;
+  const hasStats = installs || codeowners;
 
   const statsRow = hasStats
     ? {
@@ -110,7 +109,6 @@ export default function render({ meta, site, config, assets, width, height }) {
           marginTop: "30px",
         },
         children: [
-          release ? statItem(release, "Introduced") : null,
           installs ? statItem(installs, "Installations") : null,
           codeowners ? codeownersItem(codeowners) : null,
         ].filter(Boolean),
@@ -155,18 +153,41 @@ export default function render({ meta, site, config, assets, width, height }) {
                 type: "div",
                 props: {
                   style: {
-                    fontSize: "64px",
-                    fontWeight: 700,
-                    lineHeight: 1.2,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "6px",
                   },
-                  children: title,
+                  children: [
+                    {
+                      type: "div",
+                      props: {
+                        style: {
+                          fontSize: "24px",
+                          fontWeight: 600,
+                          color: "#A1A1A1",
+                        },
+                        children: "Integration",
+                      },
+                    },
+                    {
+                      type: "div",
+                      props: {
+                        style: {
+                          fontSize: "56px",
+                          fontWeight: 700,
+                          lineHeight: 1.2,
+                        },
+                        children: title,
+                      },
+                    },
+                  ],
                 },
               },
               {
                 type: "div",
                 props: {
                   style: {
-                    fontSize: "28px",
+                    fontSize: "26px",
                     color: config.colors.subtitle,
                     lineHeight: 1.3,
                     marginTop: "20px",
