@@ -144,7 +144,7 @@ const server = createServer(async (req, res) => {
       const buffer = Buffer.from(await response.arrayBuffer());
       res.writeHead(200, {
         "Content-Type": "image/png",
-        "Cache-Control": "public, max-age=3600",
+        "Cache-Control": "public, max-age=86400",
       });
       res.end(buffer);
     } catch (err) {
