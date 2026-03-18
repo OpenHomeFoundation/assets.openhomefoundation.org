@@ -11,7 +11,7 @@ Dynamic Open Graph image generator for Open Home Foundation projects. Built on [
 5. The layout receives `{ meta, site, config, assets, width, height }` and returns a [@vercel/og](https://vercel.com/docs/functions/og-image-generation) image element
 6. The image is rendered and returned as a PNG
 
-Layouts own all rendering logic. The service layer is intentionally generic — it knows nothing about specific meta tags like `og:title` or `og:image:release`. Each layout decides what to extract from `meta` and `site`.
+Layouts own all rendering logic. The service layer is intentionally generic — it knows nothing about specific meta tags like `og:title` or `og:image:installs`. Each layout decides what to extract from `meta` and `site`.
 
 ## Endpoints
 
@@ -125,7 +125,6 @@ The return value is a [@vercel/og](https://vercel.com/docs/functions/og-image-ge
 Pages can provide hints to layouts using custom meta tags. For example, the Home Assistant integration layout uses:
 
 ```html
-<meta property="og:image:release" content="2024.1">
 <meta property="og:image:installs" content="26%">
 <meta property="og:image:codeowners" content="@balloob, @dmulcahey">
 ```
