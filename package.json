@@ -1,5 +1,5 @@
 {
-  "name": "assets",
+  "name": "assets.openhomefoundation.org",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
@@ -8,14 +8,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/OpenHomeFoundation/assets.git"
+    "url": "git+https://github.com/OpenHomeFoundation/assets.openhomefoundation.org.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/OpenHomeFoundation/assets/issues"
+    "url": "https://github.com/OpenHomeFoundation/assets.openhomefoundation.org/issues"
   },
-  "homepage": "https://github.com/OpenHomeFoundation/assets#readme",
+  "homepage": "https://github.com/OpenHomeFoundation/assets.openhomefoundation.org#readme",
   "description": "",
   "dependencies": {
     "@vercel/og": "^0.11.1",
