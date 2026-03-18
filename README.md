@@ -31,7 +31,7 @@ Generates an image from query parameters directly (no URL fetching or domain val
 |-------|-------------|
 | `templateId` | Template to use (e.g. `home-assistant`, `ohf`, `default`) |
 | `layout` | Layout override (e.g. `blog`, `integration`) |
-| `size` | Image size preset (see above) |
+| `size` | `og` (1200x630, default), `portrait` (1080x1350), `square` (1080x1080) |
 | `title`, `subtitle`, etc. | Passed to the layout as `meta` — layouts decide which params they use |
 
 ### `GET /generate-opengraph`
@@ -134,8 +134,8 @@ These are layout-specific — the service passes all meta tags through without i
 ## Development
 
 ```bash
-npm install
-npm run dev
+pnpm install
+pnpm dev
 ```
 
 Opens a preview server at http://localhost:5050 with the preview UI at `/generate-opengraph`.
