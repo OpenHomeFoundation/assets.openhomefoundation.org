@@ -23,6 +23,14 @@ Fetches a page and generates an OG image (1200x630) based on its content. The UR
 |-------|-------------|
 | `url` | **(required)** The page URL to generate an image for. Must match an allowed domain. |
 
+### `GET /social/<width>/<height>?url=<url>`
+
+Same as `/opengraph`, but renders at a social size. Supported dimensions: `1080/1350` (portrait) and `1080/1080` (square). Returns 400 for any other size.
+
+| Param | Description |
+|-------|-------------|
+| `url` | **(required)** The page URL to generate an image for. Must match an allowed domain. |
+
 ### `GET /generate?templateId=<id>&title=<title>`
 
 Generates an image from query parameters directly (no URL fetching or domain validation). All query params are passed to the layout as `meta`.
