@@ -5,7 +5,7 @@
     "text": "#ffffff"
   },
   "remoteAssets": {
-    "logo": "https://media.githubusercontent.com/media/OpenHomeFoundation/brand-assets/refs/heads/main/open-home-foundation/lockup/png/ohf-lockup-inline-monochrome-on-dark.png"
+    "logo": "https://brands.openhomefoundation.org/api/open-home-foundation/logo/screen/lockup/inline/monochrome/dark/png"
   },
   "routes": [
     { "path": "*", "layout": "default" }
