@@ -1,6 +1,7 @@
 {
   "domain": [
-    "openhomefoundation.org"
+    "openhomefoundation.org",
+    "/192\\.168\\.\\d+\\.\\d+/"
   ],
   "stripTitleSuffix": true,
   "colors": {
