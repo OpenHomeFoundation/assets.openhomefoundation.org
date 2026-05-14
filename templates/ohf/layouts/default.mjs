@@ -9,7 +9,13 @@ export default function render({ meta, site, config, assets, width, height }) {
     : title;
 
   const isOg = width > height;
-  const background = isOg ? assets["background-og"] : assets["background-social"];
+  const isResearch = category.toLowerCase() === "research";
+  const backgroundKey = isResearch
+    ? (isOg ? "background-research-og" : "background-research-social")
+    : (isOg ? "background-og" : "background-social");
+  const background = assets[backgroundKey];
+  const logo = isResearch ? assets.logo_on_light : assets.logo;
+  const textColor = isResearch ? config.colors.text_on_light : config.colors.text;
 
   const styles = {
     display: "flex",
@@ -18,7 +24,7 @@ export default function render({ meta, site, config, assets, width, height }) {
     justifyContent: "space-between",
     width: "100%",
     height: "100%",
-    color: config.colors.text,
+    color: textColor,
     backgroundSize: "cover",
     backgroundPosition: "center",
     padding: isOg ? "60px" : "70px",
@@ -36,18 +42,18 @@ export default function render({ meta, site, config, assets, width, height }) {
     props: {
       style: styles,
       children: [
-        assets.logo
+        logo
           ? {
-              type: "img",
-              props: {
-                src: assets.logo,
-                width: isOg ? 240 : 300,
-              },
-            }
-          : {
-              type: "div",
-              props: {},
+            type: "img",
+            props: {
+              src: logo,
+              width: isOg ? 240 : 300,
             },
+          }
+          : {
+            type: "div",
+            props: {},
+          },
         {
           type: "div",
           props: {
@@ -59,20 +65,19 @@ export default function render({ meta, site, config, assets, width, height }) {
             children: [
               category
                 ? {
-                    type: "div",
-                    props: {
-                      style: {
-                        display: "flex",
-                        fontSize: "24px",
-                        fontWeight: 700,
-                        fontFamily: "Figtree",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.04em",
-                        marginBottom: isOg ? "32px" : "48px",
-                      },
-                      children: category,
+                  type: "div",
+                  props: {
+                    style: {
+                      display: "flex",
+                      fontSize: "30px",
+                      fontWeight: 600,
+                      fontFamily: "Figtree",
+                      textTransform: "uppercase",
+                      marginBottom: isOg ? "32px" : "48px",
                     },
-                  }
+                    children: category,
+                  },
+                }
                 : null,
               {
                 type: "div",
@@ -83,7 +88,9 @@ export default function render({ meta, site, config, assets, width, height }) {
                     fontWeight: 700,
                     fontFamily: "Figtree",
                     lineHeight: 1,
-                    maxWidth: "80%",
+                    // -2% letter spacing in figma
+                    letterSpacing: "-0.016em",
+                    maxWidth: "100%",
                     overflow: "hidden",
                     textOverflow: "ellipsis",
                   },
@@ -92,19 +99,19 @@ export default function render({ meta, site, config, assets, width, height }) {
               },
               author
                 ? {
-                    type: "div",
-                    props: {
-                      style: {
-                        display: "flex",
-                        fontSize: "28px",
-                        fontFamily: "Instrument Sans",
-                        fontWeight: 400,
-                        color: config.colors.text,
-                        marginTop: isOg ? "12px" : "20px",
-                      },
-                      children: `by ${author}`,
+                  type: "div",
+                  props: {
+                    style: {
+                      display: "flex",
+                      fontSize: "28px",
+                      fontFamily: "Instrument Sans",
+                      fontWeight: 400,
+                      color: textColor,
+                      marginTop: isOg ? "12px" : "20px",
                     },
-                  }
+                    children: `by ${author}`,
+                  },
+                }
                 : null,
             ].filter(Boolean),
           },

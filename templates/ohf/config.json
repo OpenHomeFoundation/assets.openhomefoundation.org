@@ -5,10 +5,12 @@
   ],
   "stripTitleSuffix": true,
   "colors": {
-    "text": "#F7F6F2"
+    "text": "#F7F6F2",
+    "text_on_light": "#09202E"
   },
   "remoteAssets": {
-    "logo": "https://brands.openhomefoundation.org/api/open-home-foundation/logo/screen/lockup/inline/monochrome/dark/png"
+    "logo": "https://brands.openhomefoundation.org/api/open-home-foundation/logo/screen/lockup/inline/monochrome/dark/png",
+    "logo_on_light": "https://brands.openhomefoundation.org/api/open-home-foundation/logo/screen/lockup/main/monochrome/light/png"
   },
   "routes": [
     {
