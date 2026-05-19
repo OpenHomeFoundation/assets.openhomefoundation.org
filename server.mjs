@@ -21,6 +21,8 @@ const SIZES = {
   square: { width: 1080, height: 1080 },
 };
 
+const SOCIAL_SIZES = new Set(["1080x1350", "1080x1080"]);
+
 const formHTML = readFileSync(join(__dirname, "public/generate-opengraph/index.html"), "utf-8");
 
 const server = createServer(async (req, res) => {
@@ -135,6 +137,53 @@ const server = createServer(async (req, res) => {
       const meta = parseMeta(site);
 
       const { width, height } = SIZES.og;
+      const { templateDir, layoutName, config } = resolveTemplate(finalUrl);
+      const layout = await loadLayout(templateDir, layoutName);
+      const assets = await fetchRemoteAssets(loadAssets(templateDir));
+
+      const element = layout({ meta, site, config, assets, width, height });
+      const response = new ImageResponse(element, { width, height, fonts });
+      const buffer = Buffer.from(await response.arrayBuffer());
+      res.writeHead(200, {
+        "Content-Type": "image/png",
+        "Cache-Control": "public, max-age=86400",
+      });
+      res.end(buffer);
+    } catch (err) {
+      res.writeHead(500);
+      res.end(`Failed to fetch URL: ${err.message}`);
+    }
+    return;
+  }
+
+  const socialMatch = url.pathname.match(/^\/social\/(\d+)\/(\d+)$/);
+  if (socialMatch) {
+    const width = Number(socialMatch[1]);
+    const height = Number(socialMatch[2]);
+    if (!SOCIAL_SIZES.has(`${width}x${height}`)) {
+      res.writeHead(400);
+      res.end(`Unsupported size ${width}x${height}`);
+      return;
+    }
+    const targetUrl = url.searchParams.get("url");
+    if (!targetUrl) {
+      res.writeHead(400);
+      res.end("Missing ?url= parameter");
+      return;
+    }
+    if (!isDomainAllowed(targetUrl)) {
+      res.writeHead(403);
+      res.end("Domain not allowed");
+      return;
+    }
+
+    try {
+      const pageRes = await fetch(targetUrl);
+      const finalUrl = pageRes.url || targetUrl;
+      const html = await pageRes.text();
+      const site = parse(html);
+      const meta = parseMeta(site);
+
       const { templateDir, layoutName, config } = resolveTemplate(finalUrl);
       const layout = await loadLayout(templateDir, layoutName);
       const assets = await fetchRemoteAssets(loadAssets(templateDir));

@@ -1,13 +1,21 @@
 {
-  "domain": ["openhomefoundation.org"],
+  "domain": [
+    "openhomefoundation.org",
+    "/192\\.168\\.\\d+\\.\\d+/"
+  ],
   "stripTitleSuffix": true,
   "colors": {
-    "text": "#ffffff"
+    "text": "#F7F6F2",
+    "text_on_light": "#09202E"
   },
   "remoteAssets": {
-    "logo": "https://brands.openhomefoundation.org/api/open-home-foundation/logo/screen/lockup/inline/monochrome/dark/png"
+    "logo": "https://brands.openhomefoundation.org/api/open-home-foundation/logo/screen/lockup/inline/monochrome/dark/png",
+    "logo_on_light": "https://brands.openhomefoundation.org/api/open-home-foundation/logo/screen/lockup/main/monochrome/light/png"
   },
   "routes": [
-    { "path": "*", "layout": "default" }
+    {
+      "path": "*",
+      "layout": "default"
+    }
   ]
 }

@@ -19,6 +19,8 @@ const SIZES = {
   square: { width: 1080, height: 1080 },
 };
 
+const SOCIAL_SIZES = new Set(["1080x1350", "1080x1080"]);
+
 export default async (req) => {
   const url = new URL(req.url);
 
@@ -146,6 +148,50 @@ export default async (req) => {
     }
   }
 
+  // /social/<width>/<height> — like /opengraph but at a whitelisted social size
+  const socialMatch = url.pathname.match(/^\/social\/(\d+)\/(\d+)$/);
+  if (socialMatch) {
+    const width = Number(socialMatch[1]);
+    const height = Number(socialMatch[2]);
+    if (!SOCIAL_SIZES.has(`${width}x${height}`)) {
+      return new Response(`Unsupported size ${width}x${height}`, { status: 400 });
+    }
+    const targetUrl = params.get("url");
+    if (!targetUrl) {
+      return new Response("Missing ?url= parameter", { status: 400 });
+    }
+    if (!isDomainAllowed(targetUrl)) {
+      return new Response("Domain not allowed", { status: 403 });
+    }
+
+    try {
+      const pageRes = await fetch(targetUrl);
+      const finalUrl = pageRes.url || targetUrl;
+      const html = await pageRes.text();
+      const site = parse(html);
+      const meta = parseMeta(site);
+
+      const { templateDir, layoutName, config } = resolveTemplate(finalUrl);
+      const layout = await loadLayout(templateDir, layoutName);
+      const assets = await fetchRemoteAssets(loadAssets(templateDir));
+
+      const element = layout({ meta, site, config, assets, width, height });
+      const response = new ImageResponse(element, { width, height, fonts });
+      const buffer = Buffer.from(await response.arrayBuffer());
+
+      return new Response(buffer, {
+        headers: {
+          "Content-Type": "image/png",
+          "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=604800",
+          "Netlify-CDN-Cache-Control": "public, durable, s-maxage=86400, stale-while-revalidate=604800",
+          "Netlify-Vary": "query=url",
+        },
+      });
+    } catch (err) {
+      return new Response(`Failed to fetch URL: ${err.message}`, { status: 500 });
+    }
+  }
+
   // /generate — manual params, supports size/ignoreOg
   const targetUrl = params.get("url");
   const size = params.get("size") || "og";
@@ -214,5 +260,5 @@ export default async (req) => {
 };
 
 export const config = {
-  path: ["/opengraph", "/generate", "/generate-opengraph/*"],
+  path: ["/opengraph", "/social/*", "/generate", "/generate-opengraph/*"],
 };

@@ -64,6 +64,10 @@
         <input type="text" id="subtitle" value="This is a test OG image" />
       </div>
       <div class="field">
+        <label for="category">Category</label>
+        <input type="text" id="category" placeholder="Optional" />
+      </div>
+      <div class="field">
         <label for="author">Author</label>
         <input type="text" id="author" placeholder="Optional" />
       </div>
@@ -117,6 +121,7 @@
   <script>
     const titleInput = document.getElementById("title");
     const subtitleInput = document.getElementById("subtitle");
+    const categoryInput = document.getElementById("category");
     const authorInput = document.getElementById("author");
     const urlInput = document.getElementById("url");
     const fetchBtn = document.getElementById("fetch-btn");
@@ -192,6 +197,7 @@
       const params = new URLSearchParams({
         title: titleInput.value,
         subtitle: subtitleInput.value,
+        category: categoryInput.value,
         author: authorInput.value,
         templateId: templateSelect.value,
         layout: layoutSelect.value,
@@ -202,9 +208,14 @@
     }
 
     async function updateImagesFromUrl(targetUrl) {
-      const extra = ignoreOg.checked ? "&ignoreOg=1" : "";
+      const encoded = encodeURIComponent(targetUrl);
+      const endpoints = {
+        og: `/opengraph?url=${encoded}`,
+        portrait: `/social/1080/1350?url=${encoded}`,
+        square: `/social/1080/1080?url=${encoded}`,
+      };
       for (const size of ["og", "portrait", "square"]) {
-        await loadImage(size, `/opengraph?url=${encodeURIComponent(targetUrl)}&size=${size}${extra}`);
+        await loadImage(size, endpoints[size]);
       }
     }
 
@@ -213,6 +224,10 @@
       debounceTimer = setTimeout(updateImagesManual, 300);
     });
     subtitleInput.addEventListener("input", () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(updateImagesManual, 300);
+    });
+    categoryInput.addEventListener("input", () => {
       clearTimeout(debounceTimer);
       debounceTimer = setTimeout(updateImagesManual, 300);
     });
