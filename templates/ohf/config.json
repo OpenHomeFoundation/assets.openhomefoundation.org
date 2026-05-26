@@ -1,7 +1,8 @@
 {
   "domain": [
     "openhomefoundation.org",
-    "/192\\.168\\.\\d+\\.\\d+/"
+    "/192\\.168\\.\\d+\\.\\d+/",
+    "/deploy-preview-\\d+--open-home-foundation\\.netlify\\.app/"
   ],
   "stripTitleSuffix": true,
   "colors": {
