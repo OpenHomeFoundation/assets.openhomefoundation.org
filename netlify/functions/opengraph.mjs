@@ -122,6 +122,7 @@ export default async (req) => {
 
     try {
       const pageRes = await fetch(targetUrl);
+      const pageOk = pageRes.ok;
       const finalUrl = pageRes.url || targetUrl;
       const html = await pageRes.text();
       site = parse(html);
@@ -138,8 +139,8 @@ export default async (req) => {
       return new Response(buffer, {
         headers: {
           "Content-Type": "image/png",
-          "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=604800",
-          "Netlify-CDN-Cache-Control": "public, durable, s-maxage=86400, stale-while-revalidate=604800",
+          "Cache-Control": pageOk ? "public, s-maxage=86400, stale-while-revalidate=604800" : "no-store",
+          "Netlify-CDN-Cache-Control": pageOk ? "public, durable, s-maxage=86400, stale-while-revalidate=604800" : "no-store",
           "Netlify-Vary": "query=url",
         },
       });
@@ -166,6 +167,7 @@ export default async (req) => {
 
     try {
       const pageRes = await fetch(targetUrl);
+      const pageOk = pageRes.ok;
       const finalUrl = pageRes.url || targetUrl;
       const html = await pageRes.text();
       const site = parse(html);
@@ -182,8 +184,8 @@ export default async (req) => {
       return new Response(buffer, {
         headers: {
           "Content-Type": "image/png",
-          "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=604800",
-          "Netlify-CDN-Cache-Control": "public, durable, s-maxage=86400, stale-while-revalidate=604800",
+          "Cache-Control": pageOk ? "public, s-maxage=86400, stale-while-revalidate=604800" : "no-store",
+          "Netlify-CDN-Cache-Control": pageOk ? "public, durable, s-maxage=86400, stale-while-revalidate=604800" : "no-store",
           "Netlify-Vary": "query=url",
         },
       });
@@ -203,10 +205,12 @@ export default async (req) => {
   let meta = {};
   let site = null;
   let finalUrl = targetUrl;
+  let pageOk = true;
 
   if (targetUrl) {
     try {
       const pageRes = await fetch(targetUrl);
+      pageOk = pageRes.ok;
       finalUrl = pageRes.url || targetUrl;
       const html = await pageRes.text();
       site = parse(html);
@@ -220,7 +224,7 @@ export default async (req) => {
         return new Response(buffer, {
           headers: {
             "Content-Type": imgRes.headers.get("content-type") || "image/png",
-            "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=604800",
+            "Cache-Control": pageOk ? "public, s-maxage=86400, stale-while-revalidate=604800" : "no-store",
           },
         });
       }
@@ -244,7 +248,7 @@ export default async (req) => {
   const response = new ImageResponse(element, { width, height, fonts });
   const buffer = Buffer.from(await response.arrayBuffer());
 
-  const cacheControl = targetUrl
+  const cacheControl = targetUrl && pageOk
     ? "public, s-maxage=86400, stale-while-revalidate=604800"
     : "no-store";
 
@@ -252,7 +256,7 @@ export default async (req) => {
     headers: {
       "Content-Type": "image/png",
       "Cache-Control": cacheControl,
-      "Netlify-CDN-Cache-Control": targetUrl
+      "Netlify-CDN-Cache-Control": targetUrl && pageOk
         ? "public, s-maxage=86400, stale-while-revalidate=604800"
         : "no-store",
     },
