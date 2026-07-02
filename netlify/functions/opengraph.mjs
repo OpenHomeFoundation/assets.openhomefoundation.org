@@ -2,7 +2,7 @@ import { ImageResponse } from "@vercel/og";
 import { readFileSync } from "fs";
 import { join } from "path";
 import { parse } from "node-html-parser";
-import { resolveTemplate, resolveTemplateById, loadLayout, parseMeta, loadAssets, fetchRemoteAssets, listTemplates, isDomainAllowed } from "../../lib/templates.mjs";
+import { resolveTemplate, resolveTemplateById, loadLayout, parseMeta, loadAssets, fetchRemoteAssets, listTemplates, isDomainAllowed, loadFallbackImage } from "../../lib/templates.mjs";
 
 const fontsDir = join(process.cwd(), "fonts");
 
@@ -125,11 +125,26 @@ export default async (req) => {
       const pageRes = await fetch(targetUrl);
       const pageOk = pageRes.ok;
       const finalUrl = pageRes.url || targetUrl;
+
+      const { templateDir, layoutName, config } = resolveTemplate(finalUrl);
+
+      // If the page couldn't be loaded, fall back to the template's fallback image
+      if (!pageOk) {
+        const fallback = loadFallbackImage(templateDir);
+        if (fallback) {
+          return new Response(fallback.data, {
+            headers: {
+              "Content-Type": fallback.mime,
+              "Cache-Control": "no-store",
+            },
+          });
+        }
+      }
+
       const html = await pageRes.text();
       site = parse(html);
       meta = parseMeta(site);
 
-      const { templateDir, layoutName, config } = resolveTemplate(finalUrl);
       const layout = await loadLayout(templateDir, layoutName);
       const assets = await fetchRemoteAssets(loadAssets(templateDir));
 
@@ -146,6 +161,16 @@ export default async (req) => {
         },
       });
     } catch (err) {
+      const { templateDir } = resolveTemplate(targetUrl);
+      const fallback = loadFallbackImage(templateDir);
+      if (fallback) {
+        return new Response(fallback.data, {
+          headers: {
+            "Content-Type": fallback.mime,
+            "Cache-Control": "no-store",
+          },
+        });
+      }
       return new Response(`Failed to fetch URL: ${err.message}`, { status: 500 });
     }
   }
