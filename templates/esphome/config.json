@@ -1,0 +1,20 @@
+{
+  "domain": [
+    "esphome.io",
+    "/deploy-preview-\\d+--esphome\\.netlify\\.app/"
+  ],
+  "colors": {
+    "background": "#03A9F4",
+    "text": "#000000",
+    "subtitle": "#E1F5FE"
+  },
+  "remoteAssets": {
+    "logo": "https://brands.openhomefoundation.org/api/esphome/logo/screen/lockup/main/monochrome/light/png"
+  },
+  "routes": [
+    {
+      "path": "*",
+      "layout": "default"
+    }
+  ]
+}

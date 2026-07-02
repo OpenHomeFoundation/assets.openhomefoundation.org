@@ -7,6 +7,7 @@ import { resolveTemplate, resolveTemplateById, loadLayout, parseMeta, loadAssets
 const fontsDir = join(process.cwd(), "fonts");
 
 const fonts = [
+  { name: "Figtree", data: readFileSync(join(fontsDir, "Figtree-Light.ttf")), weight: 300, style: "normal" },
   { name: "Figtree", data: readFileSync(join(fontsDir, "Figtree-Regular.ttf")), weight: 400, style: "normal" },
   { name: "Figtree", data: readFileSync(join(fontsDir, "Figtree-SemiBold.ttf")), weight: 600, style: "normal" },
   { name: "Figtree", data: readFileSync(join(fontsDir, "Figtree-Bold.ttf")), weight: 700, style: "normal" },
