@@ -9,6 +9,7 @@ import { resolveTemplate, resolveTemplateById, loadLayout, parseMeta, loadAssets
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const fonts = [
+  { name: "Figtree", data: readFileSync(join(__dirname, "fonts/Figtree-Light.ttf")), weight: 300, style: "normal" },
   { name: "Figtree", data: readFileSync(join(__dirname, "fonts/Figtree-Regular.ttf")), weight: 400, style: "normal" },
   { name: "Figtree", data: readFileSync(join(__dirname, "fonts/Figtree-SemiBold.ttf")), weight: 600, style: "normal" },
   { name: "Figtree", data: readFileSync(join(__dirname, "fonts/Figtree-Bold.ttf")), weight: 700, style: "normal" },
