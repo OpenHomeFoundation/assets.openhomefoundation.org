@@ -1,8 +1,6 @@
 {
   "domain": [
     "esphome.io",
-    "localhost",
-    "host.docker.internal",
     "/deploy-preview-\\d+--esphome\\.netlify\\.app/"
   ],
   "colors": {
