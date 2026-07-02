@@ -24,6 +24,7 @@ export default function render({ meta, site, config, assets, width, height }) {
           fontFamily: "Figtree",
           fontSize: "90px",
           lineHeight: 1.05,
+          letterSpacing: "-0.03em",
           textTransform: "uppercase",
         },
         children: [
