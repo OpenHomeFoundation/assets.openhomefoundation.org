@@ -11,6 +11,7 @@
   "remoteAssets": {
     "logo": "https://brands.openhomefoundation.org/api/esphome/logo/screen/lockup/main/monochrome/light/png"
   },
+  "fallbackImage": "og.webp",
   "routes": [
     {
       "path": "*",

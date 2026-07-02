@@ -4,7 +4,7 @@ import { readFileSync, existsSync } from "fs";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 import { parse } from "node-html-parser";
-import { resolveTemplate, resolveTemplateById, loadLayout, parseMeta, loadAssets, fetchRemoteAssets, listTemplates, isDomainAllowed } from "./lib/templates.mjs";
+import { resolveTemplate, resolveTemplateById, loadLayout, parseMeta, loadAssets, fetchRemoteAssets, listTemplates, isDomainAllowed, loadFallbackImage } from "./lib/templates.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -133,12 +133,27 @@ const server = createServer(async (req, res) => {
     try {
       const pageRes = await fetch(targetUrl);
       const finalUrl = pageRes.url || targetUrl;
+
+      const { width, height } = SIZES.og;
+      const { templateDir, layoutName, config } = resolveTemplate(finalUrl);
+
+      // If the page couldn't be loaded, fall back to the template's fallback image
+      if (!pageRes.ok) {
+        const fallback = loadFallbackImage(templateDir);
+        if (fallback) {
+          res.writeHead(200, {
+            "Content-Type": fallback.mime,
+            "Cache-Control": "no-store",
+          });
+          res.end(fallback.data);
+          return;
+        }
+      }
+
       const html = await pageRes.text();
       const site = parse(html);
       const meta = parseMeta(site);
 
-      const { width, height } = SIZES.og;
-      const { templateDir, layoutName, config } = resolveTemplate(finalUrl);
       const layout = await loadLayout(templateDir, layoutName);
       const assets = await fetchRemoteAssets(loadAssets(templateDir));
 
@@ -151,6 +166,16 @@ const server = createServer(async (req, res) => {
       });
       res.end(buffer);
     } catch (err) {
+      const { templateDir } = resolveTemplate(targetUrl);
+      const fallback = loadFallbackImage(templateDir);
+      if (fallback) {
+        res.writeHead(200, {
+          "Content-Type": fallback.mime,
+          "Cache-Control": "no-store",
+        });
+        res.end(fallback.data);
+        return;
+      }
       res.writeHead(500);
       res.end(`Failed to fetch URL: ${err.message}`);
     }
