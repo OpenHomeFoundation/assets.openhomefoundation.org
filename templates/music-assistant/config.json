@@ -1,0 +1,21 @@
+{
+  "domain": [
+    "music-assistant.io",
+    "/deploy-preview-\\d+--ohf-music-assistant\\.netlify\\.app/"
+  ],
+  "colors": {
+    "background": "#03A9F4",
+    "text": "#000000",
+    "subtitle": "#E1F5FE"
+  },
+  "remoteAssets": {
+    "logo": "https://brands.openhomefoundation.org/api/music-assistant/logo/screen/lockup/main/monochrome/light/png"
+  },
+  "fallbackImage": "og.webp",
+  "routes": [
+    {
+      "path": "*",
+      "layout": "default"
+    }
+  ]
+}
