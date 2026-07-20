@@ -22,6 +22,22 @@ const SIZES = {
 
 const SOCIAL_SIZES = new Set(["1080x1350", "1080x1080"]);
 
+// Add a trailing slash to extensionless page URLs so we fetch the canonical
+// URL directly and skip the site's 301 redirect (which otherwise makes the
+// slash / no-slash variants behave inconsistently).
+function normalizeTargetUrl(raw) {
+  try {
+    const u = new URL(raw);
+    const lastSegment = u.pathname.split("/").pop();
+    if (!u.pathname.endsWith("/") && !lastSegment.includes(".")) {
+      u.pathname += "/";
+    }
+    return u.href;
+  } catch {
+    return raw;
+  }
+}
+
 export default async (req) => {
   const url = new URL(req.url);
 
@@ -122,7 +138,7 @@ export default async (req) => {
     let site = null;
 
     try {
-      const pageRes = await fetch(targetUrl);
+      const pageRes = await fetch(normalizeTargetUrl(targetUrl));
       const pageOk = pageRes.ok;
       const finalUrl = pageRes.url || targetUrl;
 
@@ -192,7 +208,7 @@ export default async (req) => {
     }
 
     try {
-      const pageRes = await fetch(targetUrl);
+      const pageRes = await fetch(normalizeTargetUrl(targetUrl));
       const pageOk = pageRes.ok;
       const finalUrl = pageRes.url || targetUrl;
       const html = await pageRes.text();
@@ -235,7 +251,7 @@ export default async (req) => {
 
   if (targetUrl) {
     try {
-      const pageRes = await fetch(targetUrl);
+      const pageRes = await fetch(normalizeTargetUrl(targetUrl));
       pageOk = pageRes.ok;
       finalUrl = pageRes.url || targetUrl;
       const html = await pageRes.text();
