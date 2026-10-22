@@ -5,6 +5,7 @@ import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 import { parse } from "node-html-parser";
 import { resolveTemplate, resolveTemplateById, loadLayout, parseMeta, loadAssets, fetchRemoteAssets, listTemplates, isDomainAllowed, loadFallbackImage } from "./lib/templates.mjs";
+import { createTextFitter } from "./lib/fit-text.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -15,6 +16,8 @@ const fonts = [
   { name: "Figtree", data: readFileSync(join(__dirname, "fonts/Figtree-Bold.ttf")), weight: 700, style: "normal" },
   { name: "Instrument Sans", data: readFileSync(join(__dirname, "fonts/InstrumentSans-Regular.ttf")), weight: 400, style: "normal" },
 ];
+
+const fitText = createTextFitter(fonts);
 
 const SIZES = {
   og: { width: 1200, height: 630 },
@@ -157,7 +160,7 @@ const server = createServer(async (req, res) => {
       const layout = await loadLayout(templateDir, layoutName);
       const assets = await fetchRemoteAssets(loadAssets(templateDir));
 
-      const element = layout({ meta, site, config, assets, width, height });
+      const element = layout({ meta, site, config, assets, width, height, fitText });
       const response = new ImageResponse(element, { width, height, fonts });
       const buffer = Buffer.from(await response.arrayBuffer());
       res.writeHead(200, {
@@ -214,7 +217,7 @@ const server = createServer(async (req, res) => {
       const layout = await loadLayout(templateDir, layoutName);
       const assets = await fetchRemoteAssets(loadAssets(templateDir));
 
-      const element = layout({ meta, site, config, assets, width, height });
+      const element = layout({ meta, site, config, assets, width, height, fitText });
       const response = new ImageResponse(element, { width, height, fonts });
       const buffer = Buffer.from(await response.arrayBuffer());
       res.writeHead(200, {
@@ -245,7 +248,7 @@ const server = createServer(async (req, res) => {
     const layout = await loadLayout(templateDir, layoutName);
     const assets = await fetchRemoteAssets(loadAssets(templateDir));
 
-    const element = layout({ meta, site: null, config, assets, width, height });
+    const element = layout({ meta, site: null, config, assets, width, height, fitText });
     const response = new ImageResponse(element, { width, height, fonts });
     const buffer = Buffer.from(await response.arrayBuffer());
     res.writeHead(200, {

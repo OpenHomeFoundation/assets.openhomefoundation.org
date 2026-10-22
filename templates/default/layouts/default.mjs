@@ -1,6 +1,22 @@
-export default function render({ meta, site, config, assets, width, height }) {
+export default function render({ meta, site, config, assets, width, height, fitText }) {
   const title = meta["og:title"] || meta._title || meta.title || "Untitled";
   const subtitle = meta["og:description"] || meta.description || meta.subtitle || "";
+
+  const isWide = width > 1100;
+  const contentWidth = width - 120;
+  const fittedTitle = fitText(title, {
+    maxWidth: contentWidth,
+    maxLines: 3,
+    maxFontSize: isWide ? 64 : 48,
+    minFontSize: isWide ? 44 : 36,
+    fontWeight: 700,
+  });
+  const fittedSubtitle = fitText(subtitle, {
+    maxWidth: contentWidth,
+    maxLines: 3,
+    maxFontSize: isWide ? 32 : 24,
+    minFontSize: isWide ? 24 : 20,
+  });
 
   return {
     type: "div",
@@ -21,11 +37,11 @@ export default function render({ meta, site, config, assets, width, height }) {
           type: "div",
           props: {
             style: {
-              fontSize: width > 1100 ? "64px" : "48px",
+              fontSize: `${fittedTitle.fontSize}px`,
               fontWeight: 700,
               lineHeight: 1.2,
             },
-            children: title,
+            children: fittedTitle.text,
           },
         },
         subtitle
@@ -33,11 +49,11 @@ export default function render({ meta, site, config, assets, width, height }) {
               type: "div",
               props: {
                 style: {
-                  fontSize: width > 1100 ? "32px" : "24px",
+                  fontSize: `${fittedSubtitle.fontSize}px`,
                   color: config.colors.subtitle,
                   marginTop: "20px",
                 },
-                children: subtitle,
+                children: fittedSubtitle.text,
               },
             }
           : null,

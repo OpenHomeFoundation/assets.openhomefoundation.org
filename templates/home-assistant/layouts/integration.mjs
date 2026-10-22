@@ -4,11 +4,6 @@ function cleanText(el) {
   return el.text.trim();
 }
 
-function truncate(text, maxChars) {
-  if (text.length <= maxChars) return text;
-  return text.slice(0, maxChars).trimEnd() + "…";
-}
-
 function statItem(value, label) {
   return {
     type: "div",
@@ -89,14 +84,29 @@ function codeownersItem(codeowners) {
   };
 }
 
-export default function render({ meta, site, config, assets, width, height }) {
-  const title = truncate(meta["og:title"] || meta._title || meta.title || "Untitled", 55);
-  const subtitle = truncate(cleanText(site?.querySelector("article header~p"))
-    || meta["og:description"] || meta.description || meta.subtitle || "", 300);
+export default function render({ meta, site, config, assets, width, height, fitText }) {
+  const title = meta["og:title"] || meta._title || meta.title || "Untitled";
+  const subtitle = cleanText(site?.querySelector("article header~p"))
+    || meta["og:description"] || meta.description || meta.subtitle || "";
 
   const installs = meta["og:image:installs"];
   const codeowners = meta["og:image:codeowners"];
   const hasStats = installs || codeowners;
+
+  const contentWidth = width - 120;
+  const fittedTitle = fitText(title, {
+    maxWidth: contentWidth,
+    maxLines: 2,
+    maxFontSize: 56,
+    minFontSize: 40,
+    fontWeight: 700,
+  });
+  const fittedSubtitle = fitText(subtitle, {
+    maxWidth: contentWidth,
+    maxLines: hasStats ? 4 : 6,
+    maxFontSize: 26,
+    minFontSize: 20,
+  });
 
   const statsRow = hasStats
     ? {
@@ -173,11 +183,11 @@ export default function render({ meta, site, config, assets, width, height }) {
                       type: "div",
                       props: {
                         style: {
-                          fontSize: "56px",
+                          fontSize: `${fittedTitle.fontSize}px`,
                           fontWeight: 700,
                           lineHeight: 1.2,
                         },
-                        children: title,
+                        children: fittedTitle.text,
                       },
                     },
                   ],
@@ -187,12 +197,12 @@ export default function render({ meta, site, config, assets, width, height }) {
                 type: "div",
                 props: {
                   style: {
-                    fontSize: "26px",
+                    fontSize: `${fittedSubtitle.fontSize}px`,
                     color: config.colors.subtitle,
                     lineHeight: 1.3,
                     marginTop: "20px",
                   },
-                  children: subtitle,
+                  children: fittedSubtitle.text,
                 },
               },
               statsRow,

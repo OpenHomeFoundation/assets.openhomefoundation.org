@@ -1,4 +1,4 @@
-export default function render({ meta, site, config, assets, width, height }) {
+export default function render({ meta, site, config, assets, width, height, fitText }) {
   const title = meta["og:title"] || meta._title || meta.title || "Untitled";
   const category = meta["og:image:category"] || meta.category || "";
   const author = meta["og:image:author"] || meta.author || "";
@@ -17,6 +17,16 @@ export default function render({ meta, site, config, assets, width, height }) {
   const logo = isResearch ? assets.logo_on_light : assets.logo;
   const textColor = isResearch ? config.colors.text_on_light : config.colors.text;
 
+  const padding = isOg ? 60 : 70;
+  const fittedTitle = fitText(cleanTitle, {
+    maxWidth: width - padding * 2,
+    maxLines: isOg ? 3 : 4,
+    maxFontSize: 78,
+    minFontSize: 52,
+    fontWeight: 700,
+    letterSpacing: -0.016,
+  });
+
   const styles = {
     display: "flex",
     flexDirection: "column",
@@ -27,7 +37,7 @@ export default function render({ meta, site, config, assets, width, height }) {
     color: textColor,
     backgroundSize: "cover",
     backgroundPosition: "center",
-    padding: isOg ? "60px" : "70px",
+    padding: `${padding}px`,
     overflow: "hidden",
   };
 
@@ -84,7 +94,7 @@ export default function render({ meta, site, config, assets, width, height }) {
                 props: {
                   style: {
                     display: "flex",
-                    fontSize: "78px",
+                    fontSize: `${fittedTitle.fontSize}px`,
                     fontWeight: 700,
                     fontFamily: "Figtree",
                     lineHeight: 1,
@@ -94,7 +104,7 @@ export default function render({ meta, site, config, assets, width, height }) {
                     overflow: "hidden",
                     textOverflow: "ellipsis",
                   },
-                  children: cleanTitle,
+                  children: fittedTitle.text,
                 },
               },
               author
