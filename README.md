@@ -125,6 +125,7 @@ export default function render({ meta, site, config, assets, width, height }) {
 | `assets` | Local and remote assets as base64 data URIs, keyed by filename (without extension). |
 | `width` | Image width in pixels. |
 | `height` | Image height in pixels. |
+| `fitText` | `fitText(text, { maxWidth, maxLines, maxFontSize, minFontSize, fontWeight, letterSpacing, uppercase })` → `{ fontSize, text }`. Measures text with the real fonts and returns the largest font size that keeps it within `maxLines`. If it still doesn't fit at `minFontSize`, the text is truncated with an ellipsis. Use it so long titles shrink instead of taking over the image. |
 
 The return value is a [@vercel/og](https://vercel.com/docs/functions/og-image-generation) element (JSX-like object tree using `{ type, props }` syntax).
 

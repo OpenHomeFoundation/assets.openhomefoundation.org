@@ -3,6 +3,7 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import { parse } from "node-html-parser";
 import { resolveTemplate, resolveTemplateById, loadLayout, parseMeta, loadAssets, fetchRemoteAssets, listTemplates, isDomainAllowed, loadFallbackImage } from "../../lib/templates.mjs";
+import { createTextFitter } from "../../lib/fit-text.mjs";
 
 const fontsDir = join(process.cwd(), "fonts");
 
@@ -13,6 +14,8 @@ const fonts = [
   { name: "Figtree", data: readFileSync(join(fontsDir, "Figtree-Bold.ttf")), weight: 700, style: "normal" },
   { name: "Instrument Sans", data: readFileSync(join(fontsDir, "InstrumentSans-Regular.ttf")), weight: 400, style: "normal" },
 ];
+
+const fitText = createTextFitter(fonts);
 
 const SIZES = {
   og: { width: 1200, height: 630 },
@@ -148,7 +151,7 @@ export default async (req) => {
       const layout = await loadLayout(templateDir, layoutName);
       const assets = await fetchRemoteAssets(loadAssets(templateDir));
 
-      const element = layout({ meta, site, config, assets, width, height });
+      const element = layout({ meta, site, config, assets, width, height, fitText });
       const response = new ImageResponse(element, { width, height, fonts });
       const buffer = Buffer.from(await response.arrayBuffer());
 
@@ -203,7 +206,7 @@ export default async (req) => {
       const layout = await loadLayout(templateDir, layoutName);
       const assets = await fetchRemoteAssets(loadAssets(templateDir));
 
-      const element = layout({ meta, site, config, assets, width, height });
+      const element = layout({ meta, site, config, assets, width, height, fitText });
       const response = new ImageResponse(element, { width, height, fonts });
       const buffer = Buffer.from(await response.arrayBuffer());
 
@@ -270,7 +273,7 @@ export default async (req) => {
   const layout = await loadLayout(templateDir, layoutName);
   const assets = await fetchRemoteAssets(loadAssets(templateDir));
 
-  const element = layout({ meta, site, config, assets, width, height });
+  const element = layout({ meta, site, config, assets, width, height, fitText });
   const response = new ImageResponse(element, { width, height, fonts });
   const buffer = Buffer.from(await response.arrayBuffer());
 
