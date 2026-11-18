@@ -1,6 +1,7 @@
 {
   "domain": [
     "esphome.io",
+    "next.esphome.io",
     "/deploy-preview-\\d+--esphome\\.netlify\\.app/"
   ],
   "colors": {
